@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="yaffeyNASA" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/yaffeyNASA" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/yaffeyNASA" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../yaffey/.hgignore" />
+		<Unit filename="../yaffey/AndroidIDs.h" />
+		<Unit filename="../yaffey/DialogEditProperties.cpp" />
+		<Unit filename="../yaffey/DialogEditProperties.h" />
+		<Unit filename="../yaffey/DialogEditProperties.ui" />
+		<Unit filename="../yaffey/DialogFastboot.cpp" />
+		<Unit filename="../yaffey/DialogFastboot.h" />
+		<Unit filename="../yaffey/DialogFastboot.ui" />
+		<Unit filename="../yaffey/DialogImport.cpp" />
+		<Unit filename="../yaffey/DialogImport.h" />
+		<Unit filename="../yaffey/DialogImport.ui" />
+		<Unit filename="../yaffey/MainWindow.cpp" />
+		<Unit filename="../yaffey/MainWindow.h" />
+		<Unit filename="../yaffey/MainWindow.ui" />
+		<Unit filename="../yaffey/Yaffs2.h" />
+		<Unit filename="../yaffey/YaffsControl.cpp" />
+		<Unit filename="../yaffey/YaffsControl.h" />
+		<Unit filename="../yaffey/YaffsItem.cpp" />
+		<Unit filename="../yaffey/YaffsItem.h" />
+		<Unit filename="../yaffey/YaffsManager.cpp" />
+		<Unit filename="../yaffey/YaffsManager.h" />
+		<Unit filename="../yaffey/YaffsModel.cpp" />
+		<Unit filename="../yaffey/YaffsModel.h" />
+		<Unit filename="../yaffey/YaffsTreeView.cpp" />
+		<Unit filename="../yaffey/YaffsTreeView.h" />
+		<Unit filename="../yaffey/icons.qrc" />
+		<Unit filename="../yaffey/main.cpp" />
+		<Unit filename="../yaffey/yaffey.pro" />
+		<Unit filename="../yaffey/yaffey.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
