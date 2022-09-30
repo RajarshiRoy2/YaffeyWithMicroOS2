@@ -45,7 +45,7 @@ void Task0 (void *p_arg)
 
     while(1)
     {
-        int milli_seconds = 1000;
+        int milli_seconds = 100;
 
          //Storing start time
         clock_t start_time = clock();
@@ -73,9 +73,8 @@ int main(int argc, char* argv[]) {
     }
 
     OSInit();
-    OSTaskCreate(Task0, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 0);
-
-    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+    OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+    OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
 
 
     OSStart();

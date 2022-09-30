@@ -26,7 +26,8 @@
 #endif
 
 #define MAXTHREADS 5
-
+pthread_t OSTHREAD1;
+pthread_t OSTHREAD2;
 int Thread = 0;
 void CPU_CRITICAL_ENTER()
 {
@@ -67,6 +68,7 @@ void OSInitHookBegin()
 
     //}
     //OSTmrStart(1,OS_TMR_OPT_PERIODIC,OSTimeTick,NULL,"Timer",NULL);
+
     pthread_t Timer_Thread;
     pthread_create(Timer_Thread,NULL, OSTimeISR,NULL);
     pthread_detach(Timer_Thread);
@@ -164,35 +166,23 @@ OS_STK *OSTaskStkInit(void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT1
 {
     OS_STK  *p_stk;
     p_stk = ptos++;
+    switch(opt){
 
-
-    //pthread_t OSTHREAD1;
-    //pthread_t OSTHREAD2;
-    //pthread_t OSTHREAD5;
-
-    //switch(Thread){
-
-    //    case 0:
+        case 0:
             //pthread_t OSTHREAD1;
-    //        pthread_create(&OSTHREAD1,NULL,task,NULL);
-     //       pthread_detach(OSTHREAD1);
-    //        break;
-     //   case 1:
+            pthread_create(&OSTHREAD1,NULL,task,NULL);
+            pthread_detach(OSTHREAD1);
+            break;
+        case 1:
             //pthread_t OSTHREAD2;
-      //      pthread_create(&OSTHREAD2,NULL,task,NULL);
-      //      pthread_detach(OSTHREAD2);
-     //       break;
-     //   default : /* Optional */
-     //      OSInitHookEnd();
-     //       p_stk = 0;
-    //        break;
-   // }
-    //Thread++;
-    pthread_t TASKthread;
-    pthread_create(&TASKthread,NULL,task,NULL);
-    pthread_detach(TASKthread);
-
-
+            pthread_create(&OSTHREAD2,NULL,task,NULL);
+            pthread_detach(OSTHREAD2);
+            break;
+        default : /* Optional */
+           OSInitHookEnd();
+            p_stk = 0;
+            break;
+    }
     return ((OS_STK *)p_stk);
 }
 
