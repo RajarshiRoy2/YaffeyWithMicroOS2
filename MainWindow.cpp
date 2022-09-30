@@ -44,8 +44,6 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
                                                                  mUi(new Ui::MainWindow),
                                                                  mContextMenu(this) {
 
-
-
     mUi->setupUi(this);
     //setup context menu for the treeview
     mContextMenu.addAction(mUi->actionImport);
@@ -333,7 +331,7 @@ void MainWindow::on_actionAbout_triggered() {
 void MainWindow::on_actionTime_triggered()
 {
 
-    QString Time = QString::number(TimeOS);//QString::number(OSTimeGet());
+    QString Time = QString::number(OSTimeGet());//QString::number(OSTimeGet());
     static const QString about("<b>Time: " + Time + "</b><br/>");
     QMessageBox::information(this, "Time ", about);
 

@@ -29,11 +29,25 @@ static  CPU_STK  Task1Stk[TASK0_STK_SIZE];
 void Task0 (void *p_arg)
 {
     qDebug()<<"Started MicrOS system with timer...";
+
+    char* argv= " ";
+    int argc = 0;
+    //QApplication *app = new QApplication(argc,&argv);
+
+    //QString arg;
+    //if (argc > 0) {
+    //    arg = argv[1];
+   // }
+
+
+   // MainWindow w(NULL, arg);
+    //w.show();
+
     while(1)
     {
         int milli_seconds = 1000;
 
-        // Storing start time
+         //Storing start time
         clock_t start_time = clock();
 
         // looping till required time is not achieved
@@ -46,6 +60,7 @@ void Task0 (void *p_arg)
 
 }
 
+
 void Task1 (void *p_arg)
 {
     qDebug()<<"Task 1...";
@@ -57,11 +72,8 @@ int main(int argc, char* argv[]) {
         arg = argv[1];
     }
 
-
-
-
     OSInit();
-    OS_STK stack = OSTaskCreate(Task0, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 0);
+    OSTaskCreate(Task0, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 0);
 
     //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
 
