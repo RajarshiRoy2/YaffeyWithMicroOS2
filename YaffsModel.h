@@ -39,6 +39,7 @@ public:
     YaffsReadInfo openImage(const QString& imageFilename);
     void importFile(YaffsItem* parentItem, const QString& filenameWithPath);
     void importDirectory(YaffsItem* parentItem, const QString& directoryName);
+    void CreateNewDirectory();
     bool save();
     YaffsSaveInfo saveAs(const QString& filename);
     QString getImageFilename() const { return mImageFilename; }
@@ -67,6 +68,7 @@ private:
     void saveSymLink(YaffsItem* dirItem);
     int processChildItemsForDelete(YaffsItem* item);
     int calculateAndDeleteContiguousRows(QList<int>& rows, YaffsItem* parentItem);
+    int calculateAndDeleteOneRows(QList<int>& rows, YaffsItem* parentItem);
     int deleteRows(int row, int count, const QModelIndex& parentIndex);
 
 private:

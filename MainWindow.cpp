@@ -24,6 +24,8 @@
 #include <QListView>
 
 #include "MainWindow.h"
+#include "qtimer.h"
+#include "ucos_ii.h"
 #include "ui_MainWindow.h"
 #include "DialogEditProperties.h"
 #include "DialogFastboot.h"
@@ -31,14 +33,20 @@
 #include "YaffsManager.h"
 #include "YaffsTreeView.h"
 
+
 static const QString APPNAME = "Yaffey";
 static const QString VERSION = "0.2";
+
+
+
 
 MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(parent),
                                                                  mUi(new Ui::MainWindow),
                                                                  mContextMenu(this) {
-    mUi->setupUi(this);
 
+
+
+    mUi->setupUi(this);
     //setup context menu for the treeview
     mContextMenu.addAction(mUi->actionImport);
     mContextMenu.addAction(mUi->actionExport);
@@ -110,6 +118,11 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
     mFastbootDialog = NULL;
 
     setupActions();
+}
+
+void MainWindow::TimeUpdate()
+{
+    TimeOS++;
 }
 
 MainWindow::~MainWindow() {
@@ -313,10 +326,17 @@ void MainWindow::on_actionAndroidFastboot_triggered() {
 void MainWindow::on_actionAbout_triggered() {
     static const QString about("<b>" + APPNAME + " v" + VERSION + "</b><br/>" \
                                "Yet Another Flash File (System) Editor YEAH!<br/><br/>" \
-                               "Built on " + QString(__DATE__) + " at " + QString(__TIME__) + "<br/><br/>" \
-                               "Written by David Place<br/><br/>" \
-                               "Special thanks to Dan Lawrence");
+                               "Built on " + QString(__DATE__) + " at " + QString(__TIME__) + "<br/><br/>" );
     QMessageBox::information(this, "About " + APPNAME, about);
+}
+
+void MainWindow::on_actionTime_triggered()
+{
+
+    QString Time = QString::number(TimeOS);//QString::number(OSTimeGet());
+    static const QString about("<b>Time: " + Time + "</b><br/>");
+    QMessageBox::information(this, "Time ", about);
+
 }
 
 void MainWindow::on_actionColumnName_triggered() {

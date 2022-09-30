@@ -73,6 +73,11 @@ void YaffsModel::importFile(YaffsItem* parentItem, const QString& filenameWithPa
         YaffsItem* importedFile = YaffsItem::createFile(parentItem, filenameWithPath, filesize);
         parentItem->appendChild(importedFile);
 
+        //std::string str = "abc";
+        //YaffsItem* RajimportedFile = YaffsItem::createFile(parentItem, QString::fromStdString(str), 3);
+        //parentItem->appendChild(RajimportedFile);
+
+        //mItemsNew++;
         mItemsNew++;
         emit layoutChanged();
     }
@@ -98,6 +103,20 @@ void YaffsModel::importDirectory(YaffsItem* parentItem, const QString& directory
                 importFile(newDir, fileNameWithPath);
             }
         }
+
+        emit layoutChanged();
+    }
+}
+
+//Add new folder
+void YaffsModel::CreateNewDirectory() {
+    YaffsItem* parentItem;
+    const QString& directoryName = "Untitled";
+
+    if (parentItem && directoryName.length() > 0) {
+        YaffsItem* newDir = YaffsItem::createDirectory(parentItem, directoryName);
+        parentItem->appendChild(newDir);
+        mItemsNew++;
 
         emit layoutChanged();
     }
