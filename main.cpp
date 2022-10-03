@@ -30,8 +30,8 @@ void Task0 (void *p_arg)
 {
     qDebug()<<"Started MicrOS system with timer...";
 
-    char* argv= " ";
-    int argc = 0;
+    //char* argv= " ";
+    //int argc = 0;
     //QApplication *app = new QApplication(argc,&argv);
 
     //QString arg;
@@ -65,7 +65,7 @@ void Task0 (void *p_arg)
 void Task1 (void *p_arg)
 {
     qDebug()<<"Task 1...";
-    std::system( "C:\\Users\\royra\\OneDrive\\Desktop\\yaffey-v0.2-win32\\yaffey.exe" );
+    std::system( "C:\\Users\\royra\\OneDrive\\Desktop\\yaffeyNASA\\yaffey.exe" );
 }
 
 int main(int argc, char* argv[]) {
