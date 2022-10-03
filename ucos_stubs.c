@@ -6,29 +6,10 @@
 #include <pthread.h>
 #include <time.h>
 
-/*
-*********************************************************************************************************
-*                                            LOCAL DEFINES
-*********************************************************************************************************
-*/
 
-#define  WIN32_SLEEP                                        1u
-#define  WIN32_MM_TMR                                       2u          /* Use the high resolution Multimedia timer.                */
-
-#define  TIMER_METHOD                       WIN32_MM_TMR
-
-#define  WIN_MM_MIN_RES                                     1u          /* Minimum timer resolution.                                */
-
-#define  OS_MSG_TRACE                                       1u          /* Allow print trace messages.                              */
-
-#ifdef  _MSC_VER
-#define  MS_VC_EXCEPTION                           0x406D1388
-#endif
-
-#define MAXTHREADS 5
 pthread_t OSTHREAD1;
 pthread_t OSTHREAD2;
-int Thread = 0;
+
 void CPU_CRITICAL_ENTER()
 {
 
@@ -82,7 +63,7 @@ void OSInitHookBegin()
 
 void OSInitHookEnd()
 {
-    // pthread_exit(&OSTHREAD1);
+     //pthread_exit(&OSTHREAD1);
     // pthread_exit(&OSTHREAD2);
     // pthread_exit(&OSTHREAD3);
     // pthread_exit(&OSTHREAD4);
@@ -169,12 +150,10 @@ OS_STK *OSTaskStkInit(void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT1
     switch(opt){
 
         case 0:
-            //pthread_t OSTHREAD1;
             pthread_create(&OSTHREAD1,NULL,task,NULL);
             pthread_detach(OSTHREAD1);
             break;
         case 1:
-            //pthread_t OSTHREAD2;
             pthread_create(&OSTHREAD2,NULL,task,NULL);
             pthread_detach(OSTHREAD2);
             break;

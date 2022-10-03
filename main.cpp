@@ -20,7 +20,7 @@
 
 #include "MainWindow.h"
 #include "ucos_ii.h"
-
+#include <cstdlib>
 #define  TASK0_STK_SIZE                         250u
 static  CPU_STK  Task0Stk[TASK0_STK_SIZE];
 static  CPU_STK  Task1Stk[TASK0_STK_SIZE];
@@ -43,6 +43,7 @@ void Task0 (void *p_arg)
    // MainWindow w(NULL, arg);
     //w.show();
 
+
     while(1)
     {
         int milli_seconds = 100;
@@ -64,6 +65,7 @@ void Task0 (void *p_arg)
 void Task1 (void *p_arg)
 {
     qDebug()<<"Task 1...";
+    std::system( "C:\\Users\\royra\\OneDrive\\Desktop\\yaffey-v0.2-win32\\yaffey.exe" );
 }
 
 int main(int argc, char* argv[]) {
@@ -80,8 +82,8 @@ int main(int argc, char* argv[]) {
     OSStart();
 
     QApplication a(argc, argv);
-    MainWindow w(NULL, arg);
-    w.show();
+    //MainWindow w(NULL, arg);
+    //w.show();
     return a.exec();
 }
 
