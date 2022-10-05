@@ -1,107 +1,74 @@
-#include "ucos_ii.h"
-
-#include  <windows.h>
-#include  <mmsystem.h>
-#include  <stdio.h>
-#include <pthread.h>
-#include <time.h>
-
-
+#include "shared_memory.h"
+#include "yaffs2/yaffs_guts.h"
 pthread_t OSTHREAD1;
 pthread_t OSTHREAD2;
+pthread_t Timer_Thread;
 
-void CPU_CRITICAL_ENTER()
-{
+struct YaffeyItem Root;
+struct YaffeyItem Node;
+struct yaffs_obj_hdr mYaffsObjectHeader;
 
-}
-
-void CPU_CRITICAL_EXIT()
-{
-
-}
-
-void OSTimeISR()
-{
-    while(1)
-    {
-        int milli_seconds = 100;
-
-        //Storing start time
-        clock_t start_time = clock();
-
-        // looping till required time is not achieved
-        while (clock() < start_time + milli_seconds)
-                ;
-        OSTimeTick();
-
+void makeDirty(struct YaffeyItem SelfNode) {
+    if (SelfNode.mCondition == CLEAN) {
+        SelfNode.mCondition = DIRTY;
     }
-
-
-}
-
-void OSInitHookBegin()
-{
-    //int i;
-    //char temp[256];
-    //static BOOLEAN isInitialized = FALSE;
-
-    //for(i=0;i<MAXTHREADS;i++)
-    //{
-
-    //}
-    //OSTmrStart(1,OS_TMR_OPT_PERIODIC,OSTimeTick,NULL,"Timer",NULL);
-
-    pthread_t Timer_Thread;
-    pthread_create(Timer_Thread,NULL, OSTimeISR,NULL);
-    pthread_detach(Timer_Thread);
-
-    //pthread_t Interrupter_Thread;
-   // pthread_create(&OSTHREAD[0], NULL, OSInterrupter, NULL);
-   // pthread_t Scheduler_Thread;
-   // pthread_create(&OSTHREAD[1], NULL, OScheduler, NULL);
-
-}
-
-void OSInitHookEnd()
-{
-     //pthread_exit(&OSTHREAD1);
-    // pthread_exit(&OSTHREAD2);
-    // pthread_exit(&OSTHREAD3);
-    // pthread_exit(&OSTHREAD4);
-    // pthread_exit(&OSTHREAD5);
-}
-
-void OSIntCtxSw()
-{
-
-}
-
-void OSStartHighRdy()
-{
-    //OSTimeTickInit();
-
 }
 
 
+void setName(char *name[],struct YaffeyItem SelfNode) {
+    if (sizeof(*name) > 0) {
+        char *newName = *name;
+        if (sizeof(*newName) > YAFFS_MAX_NAME_LENGTH) {
+            unsigned long long int Size = sizeof(*newName)-YAFFS_MAX_NAME_LENGTH;
+            newName[sizeof(*newName)-Size] = 0;
+        }
+        size_t len = (size_t)(sizeof(*newName));
+        char currentName[YAFFS_MAX_NAME_LENGTH + 1];
+        strncpy(currentName,SelfNode.mYaffsObjectHeader.name,len);//issue here
 
-
-void OSTimeTickHook()
-{
-
+        if (newName != currentName) {
+            memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
+            memcpy(SelfNode.mYaffsObjectHeader.name, newName, len);
+            makeDirty(SelfNode);
+        }
+    } else {
+        memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
+    }
 }
 
-void OSTaskIdleHook()
-{
 
+struct YaffeyItem YaffsItem(struct YaffeyItem* parent, const char *name[], enum yaffs_obj_type type,struct YaffeyItem SelfNode) {
+    //parent->mParentItem = parent;
+
+    memset(&SelfNode.mYaffsObjectHeader, 0xff, sizeof(struct yaffs_obj_hdr));
+    setName(name, SelfNode);
+    SelfNode.mYaffsObjectHeader.type = type;
+    SelfNode.mYaffsObjectHeader.yst_ctime = OSTimeGet();
+    SelfNode.mYaffsObjectHeader.yst_atime = mYaffsObjectHeader.yst_ctime;
+    SelfNode.mYaffsObjectHeader.yst_mtime = mYaffsObjectHeader.yst_ctime;
+
+    SelfNode.mHeaderPosition = -1;
+    SelfNode.mYaffsObjectId = -1;
+
+    SelfNode.mCondition = NEW;
 }
 
-void OSTaskDelHook(OS_TCB *ptcb)
+struct YaffeyItem* MakeRoot()
 {
+    Root = YaffsItem(NULL, "", YAFFS_OBJECT_TYPE_DIRECTORY,Root);
 
-}
 
-void OSTCBInitHook(OS_TCB *ptcb)
-{
+    Root.mYaffsObjectId = YAFFS_OBJECTID_ROOT;
+    Root.mYaffsObjectHeader.parent_obj_id = Root.mYaffsObjectId;
+    Root.mYaffsObjectHeader.yst_mode = 0771 | 0x4000;
+    Root.mYaffsObjectHeader.yst_uid = 0;
+    Root.mYaffsObjectHeader.yst_gid = 0;
+
+    Root.mHeaderPosition = -1;
+    Root.mYaffsObjectId = -1;
+
+    Root.mCondition = NEW;
+    return &Root;
 
 }
 /*$PAGE*/
@@ -144,26 +111,86 @@ void OSTCBInitHook(OS_TCB *ptcb)
 *              OS_ERR_TASK_CREATE_ISR  if you tried to create a task from an ISR.
 *********************************************************************************************************
 */
+
 OS_STK *OSTaskStkInit(void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT16U opt)
 {
     OS_STK  *p_stk;
     p_stk = ptos++;
-    switch(opt){
 
-        case 0:
-            pthread_create(&OSTHREAD1,NULL,task,NULL);
-            pthread_detach(OSTHREAD1);
-            break;
-        case 1:
-            pthread_create(&OSTHREAD2,NULL,task,NULL);
-            pthread_detach(OSTHREAD2);
-            break;
-        default : /* Optional */
-           OSInitHookEnd();
-            p_stk = 0;
-            break;
-    }
+    task(p_arg);
+
+    //pthread_create(&OSTHREAD2,NULL,task,NULL);
+    //pthread_join(OSTHREAD2,NULL);
+    //switch(opt){
+
+   //     case 0:
+   //         MakeRoot();
+   //         break;
+   //     case 1:
+   //         pthread_create(&OSTHREAD2,NULL,task,NULL);
+   //         pthread_join(OSTHREAD2,NULL);
+   //         break;
+   //     default : /* Optional */
+   //        OSInitHookEnd();
+   //         p_stk = 0;
+   //         break;
+    //}
     return ((OS_STK *)p_stk);
+}
+
+void CPU_CRITICAL_ENTER()
+{
+
+}
+
+void CPU_CRITICAL_EXIT()
+{
+
+}
+
+void OSInitHookBegin()
+{
+
+
+}
+
+void OSInitHookEnd()
+{
+
+}
+
+void OSIntCtxSw()
+{
+
+}
+
+void OSStartHighRdy()
+{
+
+}
+
+
+
+
+void OSTimeTickHook()
+{
+
+
+}
+
+void OSTaskIdleHook()
+{
+
+}
+
+void OSTaskDelHook(OS_TCB *ptcb)
+{
+
+}
+
+void OSTCBInitHook(OS_TCB *ptcb)
+{
+
 }
 
 void OSTaskStatHook()

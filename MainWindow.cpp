@@ -44,7 +44,18 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
                                                                  mUi(new Ui::MainWindow),
                                                                  mContextMenu(this) {
 
+    //OSInit();
+    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+    //OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
+
+
+    //OSStart();
+
     mUi->setupUi(this);
+
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this,SLOT(TimeUpdate()));
+    timer->start(100);//100Hz timer
     //setup context menu for the treeview
     mContextMenu.addAction(mUi->actionImport);
     mContextMenu.addAction(mUi->actionExport);
@@ -120,7 +131,8 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
 
 void MainWindow::TimeUpdate()
 {
-    TimeOS++;
+    OSTimeTick();
+    //mUi->statusBar->showMessage("Time:", OSTimeGet());
 }
 
 MainWindow::~MainWindow() {
@@ -129,6 +141,12 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::newModel() {
+    //OSInit();
+    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+    //OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
+
+
+    //OSStart();
     mYaffsModel = mYaffsManager->newModel();
     mUi->treeView->setModel(mYaffsModel);
     connect(mYaffsManager, SIGNAL(modelChanged()), SLOT(on_modelChanged()));
@@ -268,7 +286,7 @@ void MainWindow::on_actionImport_triggered() {
         }
     }
 }
-
+//button to save to desktop
 void MainWindow::on_actionExport_triggered() {
     QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
     if (selectedRows.size() > 0) {
@@ -330,10 +348,10 @@ void MainWindow::on_actionAbout_triggered() {
 
 void MainWindow::on_actionTime_triggered()
 {
-
-    QString Time = QString::number(OSTimeGet());//QString::number(OSTimeGet());
-    static const QString about("<b>Time: " + Time + "</b><br/>");
+    QString Time = QString::number(OSTimeGet());
+    QString about("<b>Time: " + Time + "</b><br/>");
     QMessageBox::information(this, "Time ", about);
+    mUi->statusBar->showMessage("Time:", OSTimeGet());
 
 }
 
@@ -429,7 +447,7 @@ void MainWindow::on_modelChanged() {
 void MainWindow::on_treeView_selectionChanged() {
     setupActions();
 }
-
+//goes to yaffsmanafer to write to iso file on dekstop
 void MainWindow::exportSelectedItems(const QString& path) {
     QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
     if (selectedRows.size() > 0) {

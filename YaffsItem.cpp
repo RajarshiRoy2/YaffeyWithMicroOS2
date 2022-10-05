@@ -24,6 +24,7 @@
 
 #include "YaffsItem.h"
 #include "AndroidIDs.h"
+#include "ucos_ii.h"
 
 YaffsItem::YaffsItem(YaffsItem* parent, const yaffs_obj_hdr* yaffsObjectHeader, int headerPosition, int yaffsObjectId) {
     mParentItem = parent;
@@ -58,6 +59,7 @@ YaffsItem::~YaffsItem() {
 }
 
 YaffsItem* YaffsItem::createRoot() {
+
     YaffsItem* item = new YaffsItem(NULL, "", YAFFS_OBJECT_TYPE_DIRECTORY);
 
     item->mYaffsObjectId = YAFFS_OBJECTID_ROOT;

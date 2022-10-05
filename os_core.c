@@ -252,14 +252,14 @@ void  OSInit (void)
     OS_QInit();                                                  /* Initialize the message queue structures  */
 #endif
 
-    OS_InitTaskIdle();                                           /* Create the Idle Task                     */
-#if OS_TASK_STAT_EN > 0
-    OS_InitTaskStat();                                           /* Create the Statistic Task                */
-#endif
+//    OS_InitTaskIdle();                                           /* Create the Idle Task                     */ issue here
+//#if OS_TASK_STAT_EN > 0
+//    OS_InitTaskStat();                                           /* Create the Statistic Task                */
+//#endif
 
-#if OS_TMR_EN > 0
-    OSTmr_Init();                                                /* Initialize the Timer Manager             */
-#endif
+//#if OS_TMR_EN > 0
+//    OSTmr_Init();                                                /* Initialize the Timer Manager             */
+//#endif //to here
 
 #if OS_VERSION >= 204
     OSInitHookEnd();                                             /* Call port specific init. code            */

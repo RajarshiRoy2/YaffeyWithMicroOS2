@@ -22,10 +22,11 @@
 #include "ucos_ii.h"
 #include <cstdlib>
 #define  TASK0_STK_SIZE                         250u
-static  CPU_STK  Task0Stk[TASK0_STK_SIZE];
-static  CPU_STK  Task1Stk[TASK0_STK_SIZE];
+static CPU_STK  Task0Stk[TASK0_STK_SIZE];
 
 
+
+int ThreadEnded = 0;
 void Task0 (void *p_arg)
 {
     qDebug()<<"Started MicrOS system with timer...";
@@ -34,29 +35,29 @@ void Task0 (void *p_arg)
     //int argc = 0;
     //QApplication *app = new QApplication(argc,&argv);
 
-    //QString arg;
-    //if (argc > 0) {
-    //    arg = argv[1];
+   // QString arg;
+   // if (argc > 0) {
+   //     arg = argv[1];
    // }
 
 
-   // MainWindow w(NULL, arg);
+    //MainWindow w(NULL, arg);
     //w.show();
+    //app->exec();
 
-
-    while(1)
-    {
-        int milli_seconds = 100;
+    //while(1)
+    //{
+        //int milli_seconds = 100;
 
          //Storing start time
-        clock_t start_time = clock();
+        //clock_t start_time = clock();
 
         // looping till required time is not achieved
-        while (clock() < start_time + milli_seconds);
-        qDebug()<< OSTimeGet();
+        //while (clock() < start_time + milli_seconds);
+        //qDebug()<< OSTimeGet();
         //TimeOS = OSTimeGet();
 
-    }
+    //}
 
 
 }
@@ -65,7 +66,19 @@ void Task0 (void *p_arg)
 void Task1 (void *p_arg)
 {
     qDebug()<<"Task 1...";
-    std::system( "C:\\Users\\royra\\OneDrive\\Desktop\\yaffeyNASA\\yaffey.exe" );
+    char* argv= " ";
+    int argc = 0;
+    QApplication *app = new QApplication(argc,&argv);
+
+    QString arg;
+    if (argc > 0) {
+        arg = argv[1];
+    }
+
+
+    MainWindow w(NULL, arg);
+    w.show();
+    app->exec();
 }
 
 int main(int argc, char* argv[]) {
@@ -74,16 +87,20 @@ int main(int argc, char* argv[]) {
         arg = argv[1];
     }
 
+    //QApplication a(argc, argv);
+
     OSInit();
-    OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
-    OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
+    OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 1);
+    OSTaskCreate(Task1, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+   // OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
 
 
     OSStart();
-
-    QApplication a(argc, argv);
     //MainWindow w(NULL, arg);
     //w.show();
-    return a.exec();
+    //qDebug()<<a.exec();
+
+
+    return 0;
 }
 

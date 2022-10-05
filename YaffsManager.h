@@ -41,6 +41,10 @@ public:
     YaffsModel* newModel();
     YaffsExportInfo* exportItems(QModelIndexList itemIndices, const QString& path);
     YaffsModel* getModel() { return mYaffsModel; }
+    void MicroOSInterfaceWithYaffsManager(void *p_arg);
+    static YaffsManager* mSelf;
+    YaffsModel* mYaffsModel;
+    YaffsExportInfo* mYaffsExportInfo;
 
 signals:
     void modelChanged();
@@ -57,9 +61,7 @@ private:
     bool saveDataToFile(const QString& filename, const char* data, int length);
 
 private:
-    static YaffsManager* mSelf;
-    YaffsModel* mYaffsModel;
-    YaffsExportInfo* mYaffsExportInfo;
+
 };
 
 #endif  //YAFFSMANAGER_H

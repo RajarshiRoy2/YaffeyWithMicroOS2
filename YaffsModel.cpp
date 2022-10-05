@@ -19,6 +19,8 @@
 #include <QtGui>
 
 #include "YaffsModel.h"
+#include "os_cpu.h"
+#include "shared_memory.h"
 
 YaffsModel::YaffsModel(QObject* parent) : QAbstractItemModel(parent) {
     mYaffsRoot = NULL;
@@ -33,7 +35,19 @@ YaffsModel::~YaffsModel() {
     delete mYaffsRoot;
 }
 
+void Task2 (void *p_arg)
+{
+    qDebug()<<"Started MicrOS system with timer...";
+
+}
+
 void YaffsModel::newImage(const QString& newImageName) {
+
+    //OSInit();
+    //OSTaskCreate(Task2, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+
+    //OSStart();
+
     mYaffsRoot = YaffsItem::createRoot();
     mItemsNew++;
     mImageFilename = newImageName;
@@ -120,55 +134,6 @@ void YaffsModel::CreateNewDirectory() {
 
         emit layoutChanged();
     }
-}
-
-bool YaffsModel::save() {
-    bool saved = false;
-/*
-    if (isDirty()) {
-        if (mItemsNew > 0 || mItemsDeleted > 0) {
-            QString originalFilename = mImageFilename;
-            QString tmpFilename = mImageFilename + ".tmp";
-            saved = saveAs(tmpFilename);
-            if (saved) {
-                QFile::remove(mImageFilename);
-                QFile::rename(tmpFilename, mImageFilename);
-                mImageFilename = originalFilename;
-            }
-        } else {
-            YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), NULL);
-
-            if (yaffsControl.open(YaffsControl::OPEN_MODIFY)) {
-                QMap<int, YaffsItem*>::const_iterator i;
-                for (i = mYaffsObjectsItemMap.begin(); i != mYaffsObjectsItemMap.end(); i++) {
-                    YaffsItem* item = i.value();
-                    if (item->getCondition() == YaffsItem::DIRTY) {
-                        int headerPos = item->getHeaderPosition();
-                        const yaffs_obj_hdr& header = item->getHeader();
-                        int objectId = item->getObjectId();
-
-                        if (yaffsControl.updateHeader(headerPos, header, objectId)) {
-                            item->setCondition(YaffsItem::CLEAN);
-                        }
-                    }
-                }
-                saved = true;
-            }
-        }
-
-        if (saved) {
-            mItemsNew = 0;
-            mItemsDirty = 0;
-            mItemsDeleted = 0;
-
-            QModelIndex root = index(0, 0);
-            if (root.isValid()) {
-                emit dataChanged(root, root);
-            }
-        }
-    }*/
-
-    return saved;
 }
 
 YaffsSaveInfo YaffsModel::saveAs(const QString& filename) {

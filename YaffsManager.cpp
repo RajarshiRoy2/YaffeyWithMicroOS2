@@ -36,14 +36,41 @@ YaffsManager::~YaffsManager() {
     delete mYaffsModel;
 }
 
+void YaffsManager::MicroOSInterfaceWithYaffsManager(void *p_arg)
+{
+    int* Command = (int*)p_arg;
+    int GetCommand = (int)(size_t)(Command);
+    switch (GetCommand) {
+    case 0:
+        qDebug()<<"Task 1...";
+        //delete mYaffsModel;
+        //mYaffsModel = new YaffsModel();
+        //connect(mYaffsModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), SLOT(on_model_DataChanged(QModelIndex, QModelIndex)));
+        //connect(mYaffsModel, SIGNAL(layoutChanged()), SLOT(on_model_LayoutChanged()));
+        break;
+    default:
+        break;
+    }
+}
+void Task12 (void *p_arg)
+{
+    //YaffsManager::MicroOSInterfaceWithYaffsManager(0);
+}
 YaffsModel* YaffsManager::newModel() {
+    #define  TASK0_STK_SIZE                         250u
+    static CPU_STK  Task0Stk[TASK0_STK_SIZE];
+
+    //OSInit();
+    //OSTaskCreate(&YaffsManager::MicroOSInterfaceWithYaffsManager, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+    //OSStart();
+
     delete mYaffsModel;
     mYaffsModel = new YaffsModel();
     connect(mYaffsModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), SLOT(on_model_DataChanged(QModelIndex, QModelIndex)));
     connect(mYaffsModel, SIGNAL(layoutChanged()), SLOT(on_model_LayoutChanged()));
     return mYaffsModel;
 }
-
+//runs from gui to here
 YaffsExportInfo* YaffsManager::exportItems(QModelIndexList itemIndices, const QString& path) {
     mYaffsExportInfo = new YaffsExportInfo();
     mYaffsExportInfo->numDirsExported = 0;
@@ -64,7 +91,7 @@ void YaffsManager::on_model_DataChanged(const QModelIndex& topLeft, const QModel
 void YaffsManager::on_model_LayoutChanged() {
     emit modelChanged();
 }
-
+//goes here from file and dictectory to save to deksitop
 void YaffsManager::exportItem(const YaffsItem* item, const QString& path) {
     if (item) {
         if (item->isFile()) {
@@ -74,7 +101,7 @@ void YaffsManager::exportItem(const YaffsItem* item, const QString& path) {
         }
     }
 }
-
+//file save
 void YaffsManager::exportFile(const YaffsItem* item, const QString& path) {
     bool result = false;
     if (item->isFile() && item->getCondition() != YaffsItem::NEW) {
@@ -98,7 +125,7 @@ void YaffsManager::exportFile(const YaffsItem* item, const QString& path) {
         mYaffsExportInfo->listFileExportFailures.append(item);
     }
 }
-
+//directoey save with files in it maybe to desktop
 void YaffsManager::exportDirectory(const YaffsItem* item, const QString& path) {
     bool result = false;
     if (item->isDir() && item->getCondition() != YaffsItem::NEW) {
@@ -125,7 +152,7 @@ void YaffsManager::exportDirectory(const YaffsItem* item, const QString& path) {
         mYaffsExportInfo->listDirExportFailures.append(item);
     }
 }
-
+//writeing to the iso file on desktop
 bool YaffsManager::saveDataToFile(const QString& filename, const char* data, int length) {
     bool result = false;
     QFile file(filename);

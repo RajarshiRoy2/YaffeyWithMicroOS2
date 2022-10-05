@@ -20,6 +20,7 @@
 #define YAFFSREADER_H
 
 #include "Yaffs2.h"
+#include <cwchar>
 
 class YaffsControlObserver {
 public:

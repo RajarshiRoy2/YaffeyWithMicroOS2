@@ -23,6 +23,7 @@
 #include <QModelIndex>
 #include <QMap>
 #include <stdlib.h>
+#include "shared_memory.h"
 
 #include "YaffsControl.h"
 #include "YaffsItem.h"
@@ -40,7 +41,6 @@ public:
     void importFile(YaffsItem* parentItem, const QString& filenameWithPath);
     void importDirectory(YaffsItem* parentItem, const QString& directoryName);
     void CreateNewDirectory();
-    bool save();
     YaffsSaveInfo saveAs(const QString& filename);
     QString getImageFilename() const { return mImageFilename; }
     bool isDirty() const { return (mItemsDirty + mItemsDeleted + mItemsNew); }

@@ -42,7 +42,8 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget* parent, QString imageFilename);
     ~MainWindow();
-     void TimeUpdate();
+
+     QTimer *timer;
 
 private slots:
     void on_treeView_doubleClicked(const QModelIndex& index);
@@ -58,7 +59,7 @@ private slots:
     void on_actionEditProperties_triggered();
     void on_actionAndroidFastboot_triggered();
     void on_actionAbout_triggered();
-    void on_actionTime_triggered();
+
     void on_actionColumnName_triggered();
     void on_actionColumnSize_triggered();
     void on_actionColumnPermissions_triggered();
@@ -72,6 +73,10 @@ private slots:
     void on_treeView_customContextMenuRequested(const QPoint& pos);
     void on_treeView_selectionChanged();
     void on_modelChanged();
+
+public slots:
+    void TimeUpdate();
+    void on_actionTime_triggered();
 
 private:
     void newModel();
@@ -90,7 +95,6 @@ private:
     QMenu mContextMenu;
     QMenu mHeaderContextMenu;
     QDialog* mFastbootDialog;           //owned
-    int TimeOS;
 
 };
 
