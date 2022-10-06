@@ -21,6 +21,7 @@
 #include "MainWindow.h"
 #include "ucos_ii.h"
 #include <cstdlib>
+#include <thread>
 #define  TASK0_STK_SIZE                         250u
 static CPU_STK  Task0Stk[TASK0_STK_SIZE];
 
@@ -31,41 +32,12 @@ void Task0 (void *p_arg)
 {
     qDebug()<<"Started MicrOS system with timer...";
 
-    //char* argv= " ";
-    //int argc = 0;
-    //QApplication *app = new QApplication(argc,&argv);
-
-   // QString arg;
-   // if (argc > 0) {
-   //     arg = argv[1];
-   // }
-
-
-    //MainWindow w(NULL, arg);
-    //w.show();
-    //app->exec();
-
-    //while(1)
-    //{
-        //int milli_seconds = 100;
-
-         //Storing start time
-        //clock_t start_time = clock();
-
-        // looping till required time is not achieved
-        //while (clock() < start_time + milli_seconds);
-        //qDebug()<< OSTimeGet();
-        //TimeOS = OSTimeGet();
-
-    //}
-
-
 }
 
 
 void Task1 (void *p_arg)
 {
-    qDebug()<<"Task 1...";
+    qDebug()<<"Starting Yaffey Gui...";
     char* argv= " ";
     int argc = 0;
     QApplication *app = new QApplication(argc,&argv);
@@ -82,20 +54,23 @@ void Task1 (void *p_arg)
 }
 
 int main(int argc, char* argv[]) {
-    QString arg;
-    if (argc > 0) {
-        arg = argv[1];
-    }
+    //QString arg;
+    //if (argc > 0) {
+    //    arg = argv[1];
+    //}
 
     //QApplication a(argc, argv);
+    std::thread OSInitThread(OSInit);
 
-    OSInit();
-    OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 1);
+    //OSInit();
+    qDebug()<<OSIdleCtr;
+    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 1);
     OSTaskCreate(Task1, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
    // OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
 
 
     OSStart();
+    OSInitThread.join();
     //MainWindow w(NULL, arg);
     //w.show();
     //qDebug()<<a.exec();

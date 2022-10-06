@@ -36,33 +36,7 @@ YaffsManager::~YaffsManager() {
     delete mYaffsModel;
 }
 
-void YaffsManager::MicroOSInterfaceWithYaffsManager(void *p_arg)
-{
-    int* Command = (int*)p_arg;
-    int GetCommand = (int)(size_t)(Command);
-    switch (GetCommand) {
-    case 0:
-        qDebug()<<"Task 1...";
-        //delete mYaffsModel;
-        //mYaffsModel = new YaffsModel();
-        //connect(mYaffsModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), SLOT(on_model_DataChanged(QModelIndex, QModelIndex)));
-        //connect(mYaffsModel, SIGNAL(layoutChanged()), SLOT(on_model_LayoutChanged()));
-        break;
-    default:
-        break;
-    }
-}
-void Task12 (void *p_arg)
-{
-    //YaffsManager::MicroOSInterfaceWithYaffsManager(0);
-}
 YaffsModel* YaffsManager::newModel() {
-    #define  TASK0_STK_SIZE                         250u
-    static CPU_STK  Task0Stk[TASK0_STK_SIZE];
-
-    //OSInit();
-    //OSTaskCreate(&YaffsManager::MicroOSInterfaceWithYaffsManager, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
-    //OSStart();
 
     delete mYaffsModel;
     mYaffsModel = new YaffsModel();

@@ -44,13 +44,6 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
                                                                  mUi(new Ui::MainWindow),
                                                                  mContextMenu(this) {
 
-    //OSInit();
-    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
-    //OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
-
-
-    //OSStart();
-
     mUi->setupUi(this);
 
     timer = new QTimer(this);
@@ -132,7 +125,6 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
 void MainWindow::TimeUpdate()
 {
     OSTimeTick();
-    //mUi->statusBar->showMessage("Time:", OSTimeGet());
 }
 
 MainWindow::~MainWindow() {
@@ -141,12 +133,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::newModel() {
-    //OSInit();
-    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
-    //OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
 
-
-    //OSStart();
     mYaffsModel = mYaffsManager->newModel();
     mUi->treeView->setModel(mYaffsModel);
     connect(mYaffsManager, SIGNAL(modelChanged()), SLOT(on_modelChanged()));

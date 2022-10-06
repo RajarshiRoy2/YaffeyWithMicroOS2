@@ -48,6 +48,7 @@ HEADERS   += \
     cpu.h \
     os_cfg.h \
     os_cpu.h \
+    shared_memory.h \
     ucos_ii.h \
     yaffs2/yaffs_trace.h \
     yaffs2/yaffs_packedtags2.h \

@@ -1,76 +1,87 @@
-#include "shared_memory.h"
+#include "ucos_ii.h"
+#include  <windows.h>
+#include  <mmsystem.h>
+#include  <stdio.h>
+#include <pthread.h>
+#include <time.h>
+#include <stdbool.h>
+#include "yaffs2/yaffs_packedtags2.h"
 #include "yaffs2/yaffs_guts.h"
+#include "yaffs2/yaffs_ecc.h"
+#include <stdint.h>
+#include <stddef.h>
+#include <signal.h>
+
 pthread_t OSTHREAD1;
 pthread_t OSTHREAD2;
-pthread_t Timer_Thread;
 
-struct YaffeyItem Root;
-struct YaffeyItem Node;
-struct yaffs_obj_hdr mYaffsObjectHeader;
+//struct YaffeyItem Root;
+//struct YaffeyItem Node;
+//struct yaffs_obj_hdr mYaffsObjectHeader;
 
-void makeDirty(struct YaffeyItem SelfNode) {
-    if (SelfNode.mCondition == CLEAN) {
-        SelfNode.mCondition = DIRTY;
-    }
-}
-
-
-void setName(char *name[],struct YaffeyItem SelfNode) {
-    if (sizeof(*name) > 0) {
-        char *newName = *name;
-        if (sizeof(*newName) > YAFFS_MAX_NAME_LENGTH) {
-            unsigned long long int Size = sizeof(*newName)-YAFFS_MAX_NAME_LENGTH;
-            newName[sizeof(*newName)-Size] = 0;
-        }
-        size_t len = (size_t)(sizeof(*newName));
-        char currentName[YAFFS_MAX_NAME_LENGTH + 1];
-        strncpy(currentName,SelfNode.mYaffsObjectHeader.name,len);//issue here
-
-        if (newName != currentName) {
-            memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
-            memcpy(SelfNode.mYaffsObjectHeader.name, newName, len);
-            makeDirty(SelfNode);
-        }
-    } else {
-        memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
-    }
-}
+//void makeDirty(struct YaffeyItem SelfNode) {
+//    if (SelfNode.mCondition == CLEAN) {
+//        SelfNode.mCondition = DIRTY;
+//    }
+//}
 
 
-struct YaffeyItem YaffsItem(struct YaffeyItem* parent, const char *name[], enum yaffs_obj_type type,struct YaffeyItem SelfNode) {
-    //parent->mParentItem = parent;
+//void setName(char *name[],struct YaffeyItem SelfNode) {
+//    if (sizeof(*name) > 0) {
+//        char *newName = *name;
+//        if (sizeof(*newName) > YAFFS_MAX_NAME_LENGTH) {
+//            unsigned long long int Size = sizeof(*newName)-YAFFS_MAX_NAME_LENGTH;
+//            newName[sizeof(*newName)-Size] = 0;
+//        }
+//        size_t len = (size_t)(sizeof(*newName));
+//        char currentName[YAFFS_MAX_NAME_LENGTH + 1];
+//        strncpy(currentName,SelfNode.mYaffsObjectHeader.name,len);//issue here
 
-    memset(&SelfNode.mYaffsObjectHeader, 0xff, sizeof(struct yaffs_obj_hdr));
-    setName(name, SelfNode);
-    SelfNode.mYaffsObjectHeader.type = type;
-    SelfNode.mYaffsObjectHeader.yst_ctime = OSTimeGet();
-    SelfNode.mYaffsObjectHeader.yst_atime = mYaffsObjectHeader.yst_ctime;
-    SelfNode.mYaffsObjectHeader.yst_mtime = mYaffsObjectHeader.yst_ctime;
-
-    SelfNode.mHeaderPosition = -1;
-    SelfNode.mYaffsObjectId = -1;
-
-    SelfNode.mCondition = NEW;
-}
-
-struct YaffeyItem* MakeRoot()
-{
-    Root = YaffsItem(NULL, "", YAFFS_OBJECT_TYPE_DIRECTORY,Root);
+//        if (newName != currentName) {
+//            memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
+//            memcpy(SelfNode.mYaffsObjectHeader.name, newName, len);
+//            makeDirty(SelfNode);
+//        }
+//    } else {
+//        memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
+//    }
+//}
 
 
-    Root.mYaffsObjectId = YAFFS_OBJECTID_ROOT;
-    Root.mYaffsObjectHeader.parent_obj_id = Root.mYaffsObjectId;
-    Root.mYaffsObjectHeader.yst_mode = 0771 | 0x4000;
-    Root.mYaffsObjectHeader.yst_uid = 0;
-    Root.mYaffsObjectHeader.yst_gid = 0;
+//struct YaffeyItem YaffsItem(struct YaffeyItem* parent, const char *name[], enum yaffs_obj_type type,struct YaffeyItem SelfNode) {
+//    //parent->mParentItem = parent;
 
-    Root.mHeaderPosition = -1;
-    Root.mYaffsObjectId = -1;
+//    memset(&SelfNode.mYaffsObjectHeader, 0xff, sizeof(struct yaffs_obj_hdr));
+//    setName(name, SelfNode);
+//    SelfNode.mYaffsObjectHeader.type = type;
+//    SelfNode.mYaffsObjectHeader.yst_ctime = OSTimeGet();
+//    SelfNode.mYaffsObjectHeader.yst_atime = mYaffsObjectHeader.yst_ctime;
+//    SelfNode.mYaffsObjectHeader.yst_mtime = mYaffsObjectHeader.yst_ctime;
 
-    Root.mCondition = NEW;
-    return &Root;
+//    SelfNode.mHeaderPosition = -1;
+//    SelfNode.mYaffsObjectId = -1;
 
-}
+//    SelfNode.mCondition = NEW;
+//}
+
+//struct YaffeyItem* MakeRoot()
+//{
+//    Root = YaffsItem(NULL, "", YAFFS_OBJECT_TYPE_DIRECTORY,Root);
+
+
+//    Root.mYaffsObjectId = YAFFS_OBJECTID_ROOT;
+//    Root.mYaffsObjectHeader.parent_obj_id = Root.mYaffsObjectId;
+//    Root.mYaffsObjectHeader.yst_mode = 0771 | 0x4000;
+//    Root.mYaffsObjectHeader.yst_uid = 0;
+//    Root.mYaffsObjectHeader.yst_gid = 0;
+
+//    Root.mHeaderPosition = -1;
+//    Root.mYaffsObjectId = -1;
+
+//    Root.mCondition = NEW;
+//    return &Root;
+
+//}
 /*$PAGE*/
 /*
 *********************************************************************************************************
@@ -114,8 +125,10 @@ struct YaffeyItem* MakeRoot()
 
 OS_STK *OSTaskStkInit(void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT16U opt)
 {
-    OS_STK  *p_stk;
-    p_stk = ptos++;
+
+    //OS_STK  *p_stk;
+    //p_stk = ptos++;
+    ptos = &task;
 
     task(p_arg);
 
@@ -135,7 +148,7 @@ OS_STK *OSTaskStkInit(void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT1
    //         p_stk = 0;
    //         break;
     //}
-    return ((OS_STK *)p_stk);
+    return ptos;
 }
 
 void CPU_CRITICAL_ENTER()
@@ -150,7 +163,6 @@ void CPU_CRITICAL_EXIT()
 
 void OSInitHookBegin()
 {
-
 
 }
 
@@ -177,7 +189,7 @@ void OSTimeTickHook()
 
 
 }
-
+//need to break for loop in Idletask
 void OSTaskIdleHook()
 {
 

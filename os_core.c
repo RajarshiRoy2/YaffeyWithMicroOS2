@@ -252,21 +252,21 @@ void  OSInit (void)
     OS_QInit();                                                  /* Initialize the message queue structures  */
 #endif
 
-//    OS_InitTaskIdle();                                           /* Create the Idle Task                     */ issue here
-//#if OS_TASK_STAT_EN > 0
-//    OS_InitTaskStat();                                           /* Create the Statistic Task                */
-//#endif
+  OS_InitTaskIdle();                                           /* Create the Idle Task                     */
+#if OS_TASK_STAT_EN > 0
+    OS_InitTaskStat();  //                                         /* Create the Statistic Task                */
+#endif
 
-//#if OS_TMR_EN > 0
-//    OSTmr_Init();                                                /* Initialize the Timer Manager             */
-//#endif //to here
+#if OS_TMR_EN > 0
+    OSTmr_Init();   //                                             /* Initialize the Timer Manager             */
+#endif
 
 #if OS_VERSION >= 204
     OSInitHookEnd();                                             /* Call port specific init. code            */
 #endif
 
 #if OS_VERSION >= 270 && OS_DEBUG_EN > 0
-    OSDebugInit();
+   OSDebugInit();
 #endif
 }
 /*$PAGE*/
@@ -1352,7 +1352,7 @@ void  OS_TaskIdle (void *p_arg)
 
 
     (void)p_arg;                                 /* Prevent compiler warning for not using 'parg'      */
-    for (;;) {
+    for (;;) { //issue here infinite loop
         OS_ENTER_CRITICAL();
         OSIdleCtr++;
         OS_EXIT_CRITICAL();
