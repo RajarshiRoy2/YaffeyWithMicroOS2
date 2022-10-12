@@ -32,7 +32,7 @@
 #include  "app_cfg.h"
 #include  "os_cfg.h"
 #include  "os_cpu.h"
-
+#include <stdbool.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1545,7 +1545,8 @@ void          OSCtxSw(void);
 #ifndef OS_VIEW_MODULE
 #error  "OS_CFG.H, Missing OS_VIEW_MODULE: (1) means that uC/OS-View is present, (0) means it's absent"
 #endif
-
+void Task0 (void *p_arg);
+void Task1 (void *p_arg);
 
 #ifdef __cplusplus
 }

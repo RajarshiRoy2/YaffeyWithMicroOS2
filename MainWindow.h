@@ -25,7 +25,6 @@
 
 #include "YaffsModel.h"
 #include "YaffsManager.h"
-
 #define SELECTED_ROOT               0x1
 #define SELECTED_DIR                0x2
 #define SELECTED_FILE               0x4
@@ -42,8 +41,8 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget* parent, QString imageFilename);
     ~MainWindow();
-
-     QTimer *timer;
+    //void Task0 (void *p_arg);
+    QTimer *timer;
 
 private slots:
     void on_treeView_doubleClicked(const QModelIndex& index);

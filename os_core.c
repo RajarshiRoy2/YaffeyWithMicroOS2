@@ -1352,7 +1352,7 @@ void  OS_TaskIdle (void *p_arg)
 
 
     (void)p_arg;                                 /* Prevent compiler warning for not using 'parg'      */
-    for (;;) { //issue here infinite loop
+    for (;;) {
         OS_ENTER_CRITICAL();
         OSIdleCtr++;
         OS_EXIT_CRITICAL();

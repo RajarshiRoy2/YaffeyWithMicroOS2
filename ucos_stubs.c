@@ -11,77 +11,13 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <signal.h>
-
+#include "shared_memory.h"
 pthread_t OSTHREAD1;
 pthread_t OSTHREAD2;
 
-//struct YaffeyItem Root;
-//struct YaffeyItem Node;
-//struct yaffs_obj_hdr mYaffsObjectHeader;
+//#define  TASK0_STK_SIZE                         250
+//CPU_STK  Task0Stk[TASK0_STK_SIZE];
 
-//void makeDirty(struct YaffeyItem SelfNode) {
-//    if (SelfNode.mCondition == CLEAN) {
-//        SelfNode.mCondition = DIRTY;
-//    }
-//}
-
-
-//void setName(char *name[],struct YaffeyItem SelfNode) {
-//    if (sizeof(*name) > 0) {
-//        char *newName = *name;
-//        if (sizeof(*newName) > YAFFS_MAX_NAME_LENGTH) {
-//            unsigned long long int Size = sizeof(*newName)-YAFFS_MAX_NAME_LENGTH;
-//            newName[sizeof(*newName)-Size] = 0;
-//        }
-//        size_t len = (size_t)(sizeof(*newName));
-//        char currentName[YAFFS_MAX_NAME_LENGTH + 1];
-//        strncpy(currentName,SelfNode.mYaffsObjectHeader.name,len);//issue here
-
-//        if (newName != currentName) {
-//            memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
-//            memcpy(SelfNode.mYaffsObjectHeader.name, newName, len);
-//            makeDirty(SelfNode);
-//        }
-//    } else {
-//        memset(SelfNode.mYaffsObjectHeader.name, 0, YAFFS_MAX_NAME_LENGTH);
-//    }
-//}
-
-
-//struct YaffeyItem YaffsItem(struct YaffeyItem* parent, const char *name[], enum yaffs_obj_type type,struct YaffeyItem SelfNode) {
-//    //parent->mParentItem = parent;
-
-//    memset(&SelfNode.mYaffsObjectHeader, 0xff, sizeof(struct yaffs_obj_hdr));
-//    setName(name, SelfNode);
-//    SelfNode.mYaffsObjectHeader.type = type;
-//    SelfNode.mYaffsObjectHeader.yst_ctime = OSTimeGet();
-//    SelfNode.mYaffsObjectHeader.yst_atime = mYaffsObjectHeader.yst_ctime;
-//    SelfNode.mYaffsObjectHeader.yst_mtime = mYaffsObjectHeader.yst_ctime;
-
-//    SelfNode.mHeaderPosition = -1;
-//    SelfNode.mYaffsObjectId = -1;
-
-//    SelfNode.mCondition = NEW;
-//}
-
-//struct YaffeyItem* MakeRoot()
-//{
-//    Root = YaffsItem(NULL, "", YAFFS_OBJECT_TYPE_DIRECTORY,Root);
-
-
-//    Root.mYaffsObjectId = YAFFS_OBJECTID_ROOT;
-//    Root.mYaffsObjectHeader.parent_obj_id = Root.mYaffsObjectId;
-//    Root.mYaffsObjectHeader.yst_mode = 0771 | 0x4000;
-//    Root.mYaffsObjectHeader.yst_uid = 0;
-//    Root.mYaffsObjectHeader.yst_gid = 0;
-
-//    Root.mHeaderPosition = -1;
-//    Root.mYaffsObjectId = -1;
-
-//    Root.mCondition = NEW;
-//    return &Root;
-
-//}
 /*$PAGE*/
 /*
 *********************************************************************************************************
@@ -122,46 +58,36 @@ pthread_t OSTHREAD2;
 *              OS_ERR_TASK_CREATE_ISR  if you tried to create a task from an ISR.
 *********************************************************************************************************
 */
-
 OS_STK *OSTaskStkInit(void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT16U opt)
 {
+    int Index;
+    *ptos = (int)(size_t)p_arg;//strong variables
+    *(ptos - 1) = opt;
+    *(ptos - 2) = &task;//storing pointer address of function
 
-    //OS_STK  *p_stk;
-    //p_stk = ptos++;
-    ptos = &task;
+    pthread_t TASKthread;
+    pthread_t TASKthread2;
 
-    task(p_arg);
-
-    //pthread_create(&OSTHREAD2,NULL,task,NULL);
-    //pthread_join(OSTHREAD2,NULL);
-    //switch(opt){
-
-   //     case 0:
-   //         MakeRoot();
-   //         break;
-   //     case 1:
-   //         pthread_create(&OSTHREAD2,NULL,task,NULL);
-   //         pthread_join(OSTHREAD2,NULL);
-   //         break;
-   //     default : /* Optional */
-   //        OSInitHookEnd();
-   //         p_stk = 0;
-   //         break;
-    //}
-    return ptos;
+    switch(opt)
+    {
+        case 0:
+            pthread_create(&TASKthread,NULL,task,NULL);
+            pthread_detach(TASKthread);
+            break;
+        default:
+            pthread_create(&OSTHREAD1,NULL,task,NULL);
+            pthread_detach(OSTHREAD1);
+            break;
+    }
+    return ptos - 2;
 }
 
-void CPU_CRITICAL_ENTER()
-{
+void CPU_CRITICAL_ENTER(){}
 
-}
+void CPU_CRITICAL_EXIT(){}
 
-void CPU_CRITICAL_EXIT()
-{
 
-}
-
-void OSInitHookBegin()
+void OSInitHookBegin()//OS initalization functions
 {
 
 }
@@ -178,7 +104,11 @@ void OSIntCtxSw()
 
 void OSStartHighRdy()
 {
-
+    OSRunning = true;
+    OS_STK *FunctionPointer = OSTCBHighRdy->OSTCBStkPtr;
+    int opt = OSTCBHighRdy->OSTCBStkPtr + 1;
+    void *p_arg = OSTCBHighRdy->OSTCBStkPtr + 2;
+    //pthread_create(OSTHREAD1,NULL,&FunctionPointer,NULL);
 }
 
 
@@ -189,9 +119,25 @@ void OSTimeTickHook()
 
 
 }
+
+void sig_handler(int signum)
+{
+  //if (signum == SIGINT)
+  //{
+    OSStartHighRdy();
+    pthread_create(&OSTHREAD1,NULL,Task1,NULL);
+ // }
+
+}
+
 //need to break for loop in Idletask
 void OSTaskIdleHook()
 {
+
+    while(OSRunning)
+    {
+        // be here and pause idle task
+    }
 
 }
 

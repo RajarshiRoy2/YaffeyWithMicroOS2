@@ -42,6 +42,7 @@ struct YaffeyItem
 
 
 //shared memory
+
 extern struct YaffeyItem Root;
 extern struct yaffs_obj_hdr mYaffsObjectHeader;
 extern enum Condition mCondition;

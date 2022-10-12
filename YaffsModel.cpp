@@ -35,18 +35,7 @@ YaffsModel::~YaffsModel() {
     delete mYaffsRoot;
 }
 
-void Task2 (void *p_arg)
-{
-    qDebug()<<"Started MicrOS system with timer...";
-
-}
-
 void YaffsModel::newImage(const QString& newImageName) {
-
-    //OSInit();
-    //OSTaskCreate(Task2, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
-
-    //OSStart();
 
     mYaffsRoot = YaffsItem::createRoot();
     mItemsNew++;

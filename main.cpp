@@ -17,65 +17,85 @@
  */
 
 #include <QApplication>
-
+#include "shared_memory.h"
 #include "MainWindow.h"
 #include "ucos_ii.h"
-#include <cstdlib>
-#include <thread>
-#define  TASK0_STK_SIZE                         250u
-static CPU_STK  Task0Stk[TASK0_STK_SIZE];
+#define  TASK0_STK_SIZE                         250
+CPU_STK  Task0Stk[TASK0_STK_SIZE];
 
-
-
-int ThreadEnded = 0;
 void Task0 (void *p_arg)
 {
-    qDebug()<<"Started MicrOS system with timer...";
-
+    for(;;)
+    {
+        if(OSRunning)
+        {
+            qDebug()<<"Yaffs started... Pausing idle task..."<<OSTimeGet()<<Qt::endl;
+            qDebug()<<"Idle counter..."<<OSIdleCtr<<Qt::endl;
+            Sleep(100);
+        }
+        else
+        {
+            qDebug()<<"Yaffs didnt start so not pausing idle task..."<<OSTimeGet()<<Qt::endl;
+            qDebug()<<"Idle counter..."<<OSIdleCtr<<Qt::endl;
+            Sleep(100);
+        }
+        //signal(SIGINT,&sig_handler2);
+    }
 }
-
 
 void Task1 (void *p_arg)
 {
-    qDebug()<<"Starting Yaffey Gui...";
-    char* argv= " ";
-    int argc = 0;
-    QApplication *app = new QApplication(argc,&argv);
+    for(;;)
+    {
+        if(OSRunning)
+        {
+            qDebug()<<"NewFile true task 1..."<<OSTimeGet();
+            Sleep(1000);
+        }
+        else
+        {
+            qDebug()<<"NewFile false task 1..."<<OSTimeGet();
+            Sleep(1000);
+        }
+    }
+}
+//void Task1 (void *p_arg)
+//{
 
+//    while(1)
+//    {
+//        qDebug()<<"Starting Yaffey Gui...";
+//    }
+//    //char* argv= " ";
+//    //int argc = 0;
+//    //QApplication *app = new QApplication(argc,&argv);
+
+//    //QString arg;
+//    //if (argc > 0) {
+//    //    arg = argv[1];
+//    //}
+
+
+//   // MainWindow w(NULL, arg);
+//   // w.show();
+//    //app->exec();
+//}
+
+int main(int argc, char* argv[]) {
     QString arg;
     if (argc > 0) {
         arg = argv[1];
     }
 
+    OSInit();
+    OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+    OSStart();
 
+    QApplication a(argc, argv);
     MainWindow w(NULL, arg);
     w.show();
-    app->exec();
-}
-
-int main(int argc, char* argv[]) {
-    //QString arg;
-    //if (argc > 0) {
-    //    arg = argv[1];
-    //}
-
-    //QApplication a(argc, argv);
-    std::thread OSInitThread(OSInit);
-
-    //OSInit();
-    qDebug()<<OSIdleCtr;
-    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 1);
-    OSTaskCreate(Task1, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
-   // OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK0_STK_SIZE - 1], 1);
 
 
-    OSStart();
-    OSInitThread.join();
-    //MainWindow w(NULL, arg);
-    //w.show();
-    //qDebug()<<a.exec();
-
-
-    return 0;
+    return a.exec();
 }
 

@@ -32,6 +32,15 @@
 #include "DialogImport.h"
 #include "YaffsManager.h"
 #include "YaffsTreeView.h"
+#include "shared_memory.h"
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+#include <iostream>
+#include <cstdlib>
+using namespace std;
 
 
 static const QString APPNAME = "Yaffey";
@@ -49,6 +58,7 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this,SLOT(TimeUpdate()));
     timer->start(100);//100Hz timer
+
     //setup context menu for the treeview
     mContextMenu.addAction(mUi->actionImport);
     mContextMenu.addAction(mUi->actionExport);
@@ -122,9 +132,16 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
     setupActions();
 }
 
-void MainWindow::TimeUpdate()
+
+
+void MainWindow::TimeUpdate()//OSTickISR equivalent
 {
+    OSIntEnter();
+    if (OSIntNesting == 1) {
+         //OSTCBCur->OSTCBStkPtr = Stack Pointer;
+      }
     OSTimeTick();
+    OSIntExit();
 }
 
 MainWindow::~MainWindow() {
@@ -152,6 +169,7 @@ void MainWindow::on_actionNew_triggered() {
     newModel();
     mYaffsModel->newImage("new-yaffs2.img");
     mUi->statusBar->showMessage("Created new YAFFS2 image");
+    OSRunning = true;
 }
 
 void MainWindow::on_actionOpen_triggered() {
@@ -160,6 +178,7 @@ void MainWindow::on_actionOpen_triggered() {
     if (imageFilename.length() > 0) {
         newModel();
         openImage(imageFilename);
+        OSRunning = true;
     }
 }
 
@@ -206,6 +225,7 @@ void MainWindow::openImage(const QString& imageFilename) {
             QMessageBox::critical(this, "Error", msg);
         }
         setupActions();
+        OSRunning = true;
     }
 }
 
@@ -218,6 +238,7 @@ void MainWindow::on_actionClose_triggered() {
     mUi->linePath->clear();
     updateWindowTitle();
     setupActions();
+    OSRunning = false;
 }
 
 void MainWindow::on_actionSaveAs_triggered() {

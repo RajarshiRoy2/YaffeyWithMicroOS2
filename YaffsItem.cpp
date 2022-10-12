@@ -44,7 +44,7 @@ YaffsItem::YaffsItem(YaffsItem* parent, const QString& name, yaffs_obj_type type
     memset(&mYaffsObjectHeader, 0xff, sizeof(yaffs_obj_hdr));
     setName(name);
     mYaffsObjectHeader.type = type;
-    mYaffsObjectHeader.yst_ctime = QDateTime::currentDateTime().currentSecsSinceEpoch();
+    mYaffsObjectHeader.yst_ctime = OSTimeGet();//QDateTime::currentDateTime().currentSecsSinceEpoch();
     mYaffsObjectHeader.yst_atime = mYaffsObjectHeader.yst_ctime;
     mYaffsObjectHeader.yst_mtime = mYaffsObjectHeader.yst_ctime;
 
@@ -128,14 +128,14 @@ QVariant YaffsItem::data(int column) const {
             return mYaffsObjectHeader.alias;
         }
     } else if (column == DATE_ACCESSED) {
-        QDateTime atime = QDateTime::fromSecsSinceEpoch(mYaffsObjectHeader.yst_atime);
-        return atime.toString("dd/MM/yyyy hh:mm:ss");
+        QString atime = QString::number(mYaffsObjectHeader.yst_atime);
+        return atime;
     } else if (column == DATE_CREATED) {
-        QDateTime ctime = QDateTime::fromSecsSinceEpoch(mYaffsObjectHeader.yst_ctime);
-        return ctime.toString("dd/MM/yyyy hh:mm:ss");
+        QString ctime = QString::number(mYaffsObjectHeader.yst_ctime);
+        return ctime;
     } else if (column == DATE_MODIFIED) {
-        QDateTime mtime = QDateTime::fromSecsSinceEpoch(mYaffsObjectHeader.yst_mtime);
-        return mtime.toString("dd/MM/yyyy hh:mm:ss");
+        QString mtime = QString::number(mYaffsObjectHeader.yst_mtime);
+        return mtime;
     } else if (column == USER) {
         QString uid = ANDROID_IDS.value(mYaffsObjectHeader.yst_uid);
         if (uid.length() > 0) {
