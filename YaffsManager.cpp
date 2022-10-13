@@ -75,6 +75,7 @@ void YaffsManager::exportItem(const YaffsItem* item, const QString& path) {
         }
     }
 }
+
 //file save
 void YaffsManager::exportFile(const YaffsItem* item, const QString& path) {
     bool result = false;

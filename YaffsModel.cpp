@@ -43,7 +43,7 @@ void YaffsModel::newImage(const QString& newImageName) {
 
     emit layoutChanged();
 }
-
+//re reading old yaffeys images files
 YaffsReadInfo YaffsModel::openImage(const QString& imageFilename) {
     mImageFilename = imageFilename;
 
@@ -67,7 +67,7 @@ YaffsReadInfo YaffsModel::openImage(const QString& imageFilename) {
 
     return readInfo;
 }
-
+//saves to yaffs from deskptop
 void YaffsModel::importFile(YaffsItem* parentItem, const QString& filenameWithPath) {
     if (parentItem && filenameWithPath.length() > 0) {
         QFileInfo fileInfo(filenameWithPath);
@@ -186,7 +186,7 @@ void YaffsModel::saveDirectory(YaffsItem* dirItem) {
         dirItem->setCondition(YaffsItem::CLEAN);
     }
 }
-
+//saves files to desktop
 void YaffsModel::saveFile(YaffsItem* fileItem) {
     if (fileItem) {
         YaffsItem* parentItem = fileItem->parent();

@@ -55,6 +55,7 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
 
     mUi->setupUi(this);
 
+    //external timer
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this,SLOT(TimeUpdate()));
     timer->start(100);//100Hz timer
@@ -528,7 +529,7 @@ int MainWindow::identifySelection(const QModelIndexList& selectedRows) {
 
     return selectionFlags;
 }
-
+//setting up Gui
 void MainWindow::setupActions() {
     updateWindowTitle();
 

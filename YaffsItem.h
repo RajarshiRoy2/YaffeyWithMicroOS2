@@ -42,6 +42,7 @@
 class YaffsItem {
 public:
     YaffsItem(YaffsItem* parent, const yaffs_obj_hdr* yaffsObjectHeader, int headerPosition, int yaffsObjectId);
+    YaffsItem(YaffsItem* parent, const QString& name, yaffs_obj_type type);
     ~YaffsItem();
 
     enum Condition {
@@ -72,6 +73,20 @@ public:
     static YaffsItem* createRoot();
     static YaffsItem* createFile(YaffsItem* parentItem, const QString& filenameWithPath, int filesize);
     static YaffsItem* createDirectory(YaffsItem* parentItem, const QString& filenameWithPath);
+
+
+    //
+    YaffsItem* mParentItem;
+    int mHeaderPosition;
+    int mYaffsObjectId;
+    QList<YaffsItem*> mChildItems;
+    yaffs_obj_hdr mYaffsObjectHeader;
+    Condition mCondition;
+    QString mExternalFilename;      //filename with path - only for new files
+    bool mMarkedForDelete;
+    bool mHasChildMarkedForDelete;
+
+    //
 
     QVariant data(int column) const;
     int row() const;
@@ -115,20 +130,12 @@ public:
     Condition getCondition() const { return mCondition; }
 
 private:
-    YaffsItem(YaffsItem* parent, const QString& name, yaffs_obj_type type);
+
     QString parseMode(int mode) const;
     void makeDirty();
 
 private:
-    YaffsItem* mParentItem;
-    int mHeaderPosition;
-    int mYaffsObjectId;
-    QList<YaffsItem*> mChildItems;
-    yaffs_obj_hdr mYaffsObjectHeader;
-    Condition mCondition;
-    QString mExternalFilename;      //filename with path - only for new files
-    bool mMarkedForDelete;
-    bool mHasChildMarkedForDelete;
+
 };
 
 #endif  //YAFFSITEM_H

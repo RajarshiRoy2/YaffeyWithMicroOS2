@@ -113,6 +113,7 @@ int YaffsControl::addDirectory(const yaffs_obj_hdr& objectHeader, int& headerPos
     return objectId;
 }
 
+//saves to dekptop
 int YaffsControl::addFile(const yaffs_obj_hdr& objectHeader, int& headerPos, const char* data, int fileSize) {
     headerPos = ftell(mImageFile);
     int objectId = mObjectId++;
@@ -174,7 +175,7 @@ bool YaffsControl::writeHeader(const yaffs_obj_hdr& objectHeader, u32 objectId) 
     }
     return result;
 }
-
+//writes to file in chunks
 bool YaffsControl::writePage(u32 objectId, u32 chunkId, u32 numBytes) {
     bool result = false;
 

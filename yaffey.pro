@@ -12,6 +12,7 @@ RC_FILE    = yaffey.rc
 
 SOURCES   += main.cpp\
     MainWindow.cpp \
+    YaffeyCommand.c \
     YaffsModel.cpp \
     YaffsItem.cpp \
     YaffsTreeView.cpp \
@@ -39,6 +40,7 @@ SOURCES   += main.cpp\
 
 HEADERS   += \
     MainWindow.h \
+    YaffeyCommand.h \
     YaffsModel.h \
     YaffsItem.h \
     YaffsTreeView.h \

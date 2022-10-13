@@ -29,7 +29,7 @@ void Task0 (void *p_arg)
     {
         if(OSRunning)
         {
-            qDebug()<<"Yaffs started... Pausing idle task..."<<OSTimeGet()<<Qt::endl;
+            qDebug()<<"Yaffs started so pausing idle task..."<<OSTimeGet()<<Qt::endl;
             qDebug()<<"Idle counter..."<<OSIdleCtr<<Qt::endl;
             Sleep(100);
         }

@@ -13,8 +13,6 @@
 #include <stddef.h>
 //#include "Yaffs2.h"
 
-
-
 enum Condition {
     CLEAN,
     DIRTY,
