@@ -57,6 +57,17 @@ public:
     int columnCount(const QModelIndex& parentIndex = QModelIndex()) const;
     int removeRows(const QModelIndexList& selectedRows);
 
+    QString mImageFilename;
+    YaffsItem* mYaffsRoot;
+    QMap<int, YaffsItem*> mYaffsObjectsItemMap;
+    QList<YaffsItem*> mYaffsObjectsWithoutParent;
+    YaffsControl* mYaffsSaveControl;
+    int mItemsNew;
+    int mItemsDirty;
+    int mItemsDeleted;
+    int processChildItemsForDelete(YaffsItem* item);
+    int calculateAndDeleteContiguousRows(QList<int>& rows, YaffsItem* parentItem);
+
 protected:
     //from YaffsControlObserver
     void newItem(int yaffsObjectId, const yaffs_obj_hdr* yaffsObjectHeader, int fileOffset);
@@ -66,20 +77,12 @@ private:
     void saveDirectory(YaffsItem* dirItem);
     void saveFile(YaffsItem* dirItem);
     void saveSymLink(YaffsItem* dirItem);
-    int processChildItemsForDelete(YaffsItem* item);
-    int calculateAndDeleteContiguousRows(QList<int>& rows, YaffsItem* parentItem);
+
     int calculateAndDeleteOneRows(QList<int>& rows, YaffsItem* parentItem);
     int deleteRows(int row, int count, const QModelIndex& parentIndex);
 
 private:
-    QString mImageFilename;
-    YaffsItem* mYaffsRoot;
-    QMap<int, YaffsItem*> mYaffsObjectsItemMap;
-    QList<YaffsItem*> mYaffsObjectsWithoutParent;
-    YaffsControl* mYaffsSaveControl;
-    int mItemsNew;
-    int mItemsDirty;
-    int mItemsDeleted;
+
 };
 
 #endif  //YAFFSMODEL_H

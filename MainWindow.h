@@ -41,7 +41,7 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget* parent, QString imageFilename);
     ~MainWindow();
-    //void Task0 (void *p_arg);
+    //void YaffeyCommandMicroOS2(void *p_arg);
     QTimer *timer;
 
 private slots:
@@ -73,6 +73,7 @@ private slots:
     void on_treeView_selectionChanged();
     void on_modelChanged();
 
+
 public slots:
     void TimeUpdate();
     void on_actionTime_triggered();
@@ -94,6 +95,7 @@ private:
     QMenu mContextMenu;
     QMenu mHeaderContextMenu;
     QDialog* mFastbootDialog;           //owned
+    //std::vector<Command>YaffsCommandsMicroOS2;
 
 };
 

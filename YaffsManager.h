@@ -45,6 +45,7 @@ public:
     static YaffsManager* mSelf;
     YaffsModel* mYaffsModel;
     YaffsExportInfo* mYaffsExportInfo;
+    void exportItem(const YaffsItem* item, const QString& path);
 
 signals:
     void modelChanged();
@@ -55,7 +56,7 @@ private slots:
 
 private:
     YaffsManager();
-    void exportItem(const YaffsItem* item, const QString& path);
+
     void exportFile(const YaffsItem* item, const QString& path);
     void exportDirectory(const YaffsItem* item, const QString& path);
     bool saveDataToFile(const QString& filename, const char* data, int length);

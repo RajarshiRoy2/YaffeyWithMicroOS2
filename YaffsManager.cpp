@@ -36,7 +36,7 @@ YaffsManager::~YaffsManager() {
     delete mYaffsModel;
 }
 
-YaffsModel* YaffsManager::newModel() {
+YaffsModel* YaffsManager::newModel() {//cannot do this on another thread since connecting yaffs model to GUI in qt
 
     delete mYaffsModel;
     mYaffsModel = new YaffsModel();

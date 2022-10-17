@@ -40,18 +40,156 @@
 #endif
 #include <iostream>
 #include <cstdlib>
+#include <QAbstractItemModel>
+
 using namespace std;
 
+struct Command{
+    int CommandNumber;
+    QString imageFilename;
+};
 
 static const QString APPNAME = "Yaffey";
 static const QString VERSION = "0.2";
 
+#define  TASK0_STK_SIZE                         250
+CPU_STK  Task0Stk[TASK0_STK_SIZE];
+//shared memory
+std::vector<Command>YaffsCommandsMicroOS2;
+YaffsModel* CYaffsModel;            //not owned
+YaffsManager* CYaffsManager;        //not owned - singleton
+YaffsReadInfo readInfo;
+YaffsSaveInfo saveInfo;
+YaffsItem* parentItem;
+QModelIndexList selectedRowsDelete;
+QModelIndexList selectedRowsExport;
+int itemsDeleted;
+YaffsExportInfo* exportInfo;
 
+void YaffeyCommandMicroOS2(void *p_arg)
+{
+    for(;;)
+    {
+        if(YaffsCommandsMicroOS2.size()>0)
+            {
+               switch(YaffsCommandsMicroOS2.at(0).CommandNumber){
+                   case 0:
+                       CYaffsManager = YaffsManager::getInstance();
+                       YaffsCommandsMicroOS2.pop_back();
+                   break;
+                   case 1:
+                       CYaffsModel = CYaffsManager->newModel();
+                       YaffsCommandsMicroOS2.pop_back();
+                   break;
+                   case 2:
+                       CYaffsModel->mYaffsRoot = YaffsItem::createRoot();
+                       CYaffsModel->mItemsNew++;
+                       CYaffsModel->mImageFilename = "new-yaffs2.img";
+                       emit CYaffsModel->layoutChanged();
 
+                       YaffsCommandsMicroOS2.pop_back();
+                   break;
+                   case 3:
+                       CYaffsModel->mImageFilename = YaffsCommandsMicroOS2.at(0).imageFilename;
+
+                       YaffsReadInfo readinfo;
+                       memset(&readinfo, 0, sizeof(YaffsReadInfo));
+
+                       if (CYaffsModel->mYaffsRoot == NULL)
+                       {
+                           YaffsControl yaffsControl(CYaffsModel->mImageFilename.toStdString().c_str(), CYaffsModel);
+                           if (yaffsControl.open(YaffsControl::OPEN_READ)) {
+                               if (yaffsControl.readImage()) {
+                                   readinfo = yaffsControl.getReadInfo();
+
+                                   CYaffsModel->mItemsNew = 0;
+                                   CYaffsModel->mItemsDirty = 0;
+                                   CYaffsModel->mItemsDeleted = 0;
+                               }
+                           }
+                       }
+                       readInfo = readinfo;
+                       YaffsCommandsMicroOS2.pop_back();
+                        break;
+                   case 4:
+                        saveInfo = CYaffsModel->saveAs(YaffsCommandsMicroOS2.at(0).imageFilename);
+                        YaffsCommandsMicroOS2.pop_back();
+                        break;
+                   case 5:
+                        CYaffsModel->importFile(parentItem, YaffsCommandsMicroOS2.at(0).imageFilename);
+                        YaffsCommandsMicroOS2.pop_back();
+                        break;
+                   case 6:
+                        CYaffsModel->importDirectory(parentItem, YaffsCommandsMicroOS2.at(0).imageFilename);
+                        YaffsCommandsMicroOS2.pop_back();
+                        break;
+                  case 7:
+                       foreach (QModelIndex index, selectedRowsDelete) {
+                           YaffsItem* item = static_cast<YaffsItem*>(index.internalPointer());
+                           if (item) {
+                               item->markForDelete();
+                           }
+                       }
+
+                       itemsDeleted = 0;
+                       if (CYaffsModel->mYaffsRoot->hasChildMarkedForDelete()) {
+                           QList<int> rowsToDelete;
+
+                           //iterate through child items to build up list of items to delete
+                           for (int i = 0; i < CYaffsModel->mYaffsRoot->childCount(); ++i) {
+                               YaffsItem* childItem = CYaffsModel->mYaffsRoot->child(i);
+                               if (childItem->isMarkedForDelete()) {
+                                   rowsToDelete.append(childItem->row());
+                               } else if (childItem->hasChildMarkedForDelete()) {
+                                   itemsDeleted += CYaffsModel->processChildItemsForDelete(childItem);
+                                   CYaffsModel->mYaffsRoot->setHasChildMarkedForDelete(false);
+                               }
+                           }
+
+                           itemsDeleted += CYaffsModel->calculateAndDeleteContiguousRows(rowsToDelete, CYaffsModel->mYaffsRoot);
+                       }
+                        YaffsCommandsMicroOS2.pop_back();
+                        break;
+                   case 8:
+                       CYaffsManager->mYaffsExportInfo = new YaffsExportInfo();
+                       CYaffsManager->mYaffsExportInfo->numDirsExported = 0;
+                       CYaffsManager->mYaffsExportInfo->numFilesExported = 0;
+
+                       foreach (QModelIndex index, selectedRowsExport) {
+                           YaffsItem* item = static_cast<YaffsItem*>(index.internalPointer());
+                           CYaffsManager->exportItem(item, YaffsCommandsMicroOS2.at(0).imageFilename);
+                       }
+                        exportInfo = CYaffsManager->mYaffsExportInfo;
+                        YaffsCommandsMicroOS2.pop_back();
+                        break;
+                   default:
+                       break;
+               }
+            }
+    }
+
+}
+
+void PushCommandOntoCommandVector(int Command, const QString& imageFilename)
+{
+    struct Command NewModelCommand;
+    NewModelCommand.CommandNumber = Command;
+    NewModelCommand.imageFilename = imageFilename;
+    YaffsCommandsMicroOS2.push_back(NewModelCommand);
+    while(YaffsCommandsMicroOS2.size()>0)
+    {
+        qDebug()<<"Pausing Main thread... Time:"<<OSTimeGet();
+        Sleep(1);
+    }
+}
 
 MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(parent),
                                                                  mUi(new Ui::MainWindow),
                                                                  mContextMenu(this) {
+
+    OSInit();
+    OSTaskCreate(YaffeyCommandMicroOS2, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
+    OSStart();
 
     mUi->setupUi(this);
 
@@ -81,7 +219,10 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
     mHeaderContextMenu.addAction(mUi->actionColumnGroup);
 
     //get YaffsManager instance and create model
-    mYaffsManager = YaffsManager::getInstance();
+    QString PlaceHolder;
+    PushCommandOntoCommandVector(0,PlaceHolder);
+
+    //CYaffsManager = YaffsManager::getInstance();
     newModel();
     updateWindowTitle();
 
@@ -131,9 +272,9 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
     mFastbootDialog = NULL;
 
     setupActions();
+
+
 }
-
-
 
 void MainWindow::TimeUpdate()//OSTickISR equivalent
 {
@@ -150,11 +291,14 @@ MainWindow::~MainWindow() {
     delete mFastbootDialog;
 }
 
-void MainWindow::newModel() {
 
-    mYaffsModel = mYaffsManager->newModel();
-    mUi->treeView->setModel(mYaffsModel);
-    connect(mYaffsManager, SIGNAL(modelChanged()), SLOT(on_modelChanged()));
+
+void MainWindow::newModel() {//cannot put this function onto MicroOS due to Qt connection to shared memory
+
+    //PushCommandOntoCommandVector(1);
+    CYaffsModel = CYaffsManager->newModel();
+    mUi->treeView->setModel(CYaffsModel);
+    connect(CYaffsManager, SIGNAL(modelChanged()), SLOT(on_modelChanged()));
 }
 
 void MainWindow::on_treeView_doubleClicked(const QModelIndex& itemIndex) {
@@ -168,7 +312,10 @@ void MainWindow::on_treeView_doubleClicked(const QModelIndex& itemIndex) {
 
 void MainWindow::on_actionNew_triggered() {
     newModel();
-    mYaffsModel->newImage("new-yaffs2.img");
+    QString PlaceHolder;
+    PushCommandOntoCommandVector(2,PlaceHolder);
+
+    //CYaffsModel->newImage("new-yaffs2.img");
     mUi->statusBar->showMessage("Created new YAFFS2 image");
     OSRunning = true;
 }
@@ -183,10 +330,10 @@ void MainWindow::on_actionOpen_triggered() {
     }
 }
 
-void MainWindow::updateWindowTitle() {
-    QString modelFilename = mYaffsModel->getImageFilename();
+void MainWindow::updateWindowTitle() {//cannot add to Gui since its Qt realted
+    QString modelFilename = CYaffsModel->getImageFilename();
     if (modelFilename.length() > 0) {
-        if (mYaffsModel->isDirty()) {
+        if (CYaffsModel->isDirty()) {
             setWindowTitle(APPNAME + " - " + modelFilename + "*");
         } else {
             setWindowTitle(APPNAME + " - " + modelFilename);
@@ -196,11 +343,13 @@ void MainWindow::updateWindowTitle() {
     }
 }
 
-void MainWindow::openImage(const QString& imageFilename) {
+void MainWindow::openImage(const QString& imageFilename) {//done
     if (imageFilename.length() > 0) {
-        YaffsReadInfo readInfo = mYaffsModel->openImage(imageFilename);
+        PushCommandOntoCommandVector(3,imageFilename);
+        //readInfo = CYaffsModel->openImage(imageFilename);
+        CYaffsModel->openImage(imageFilename);//only does emite layout which is Qt realted
         if (readInfo.result) {
-            QModelIndex rootIndex = mYaffsModel->index(0, 0);
+            QModelIndex rootIndex = CYaffsModel->index(0, 0);
             mUi->treeView->expand(rootIndex);
             mUi->statusBar->showMessage("Opened image: " + imageFilename);
 
@@ -225,13 +374,13 @@ void MainWindow::openImage(const QString& imageFilename) {
             mUi->statusBar->showMessage(msg);
             QMessageBox::critical(this, "Error", msg);
         }
-        setupActions();
+        setupActions();//qt realted Gui changed from shared memory
         OSRunning = true;
     }
 }
 
-void MainWindow::on_actionClose_triggered() {
-    QString imageFile = mYaffsModel->getImageFilename();
+void MainWindow::on_actionClose_triggered() {//Qt related mostly but other functons done in yaffs command center
+    QString imageFile = CYaffsModel->getImageFilename();
     if (imageFile.length() > 0) {
         newModel();
         mUi->statusBar->showMessage("Closed image file: " + imageFile);
@@ -242,12 +391,14 @@ void MainWindow::on_actionClose_triggered() {
     OSRunning = false;
 }
 
-void MainWindow::on_actionSaveAs_triggered() {
-    if (mYaffsModel->isImageOpen()) {
-        QString imgName = mYaffsModel->getImageFilename();
+void MainWindow::on_actionSaveAs_triggered() {//done and the rest are Qt Gui related
+    if (CYaffsModel->isImageOpen()) {
+        QString imgName = CYaffsModel->getImageFilename();
         QString saveAsFilename = QFileDialog::getSaveFileName(this, "Save Image As", "./" + imgName);
         if (saveAsFilename.length() > 0) {
-            YaffsSaveInfo saveInfo = mYaffsModel->saveAs(saveAsFilename);
+            PushCommandOntoCommandVector(4,saveAsFilename);
+
+            //saveInfo = CYaffsModel->saveAs(saveAsFilename);
             updateWindowTitle();
             if (saveInfo.result) {
                 mUi->statusBar->showMessage("Image saved: " + saveAsFilename);
@@ -268,35 +419,37 @@ void MainWindow::on_actionSaveAs_triggered() {
         }
     }
 }
-
-void MainWindow::on_actionImport_triggered() {
+//importing file or folder to yaffs
+void MainWindow::on_actionImport_triggered() {//done
     DialogImport import(this);
     int result = import.exec();
 
     if (result == DialogImport::RESULT_FILE) {
         QModelIndex parentIndex = mUi->treeView->selectionModel()->currentIndex();
-        YaffsItem* parentItem = static_cast<YaffsItem*>(parentIndex.internalPointer());
+        parentItem = static_cast<YaffsItem*>(parentIndex.internalPointer());
         if (parentItem && parentItem->isDir()) {
             QStringList fileNames = QFileDialog::getOpenFileNames(this, "Select file(s) to import...");
             foreach (QString importFilename, fileNames) {
                 importFilename.replace('\\', '/');
-                mYaffsModel->importFile(parentItem, importFilename);
+                PushCommandOntoCommandVector(5,importFilename);
+                //CYaffsModel->importFile(parentItem, importFilename);
             }
         }
     } else if (result == DialogImport::RESULT_DIRECTORY) {
         QModelIndex parentIndex = mUi->treeView->selectionModel()->currentIndex();
-        YaffsItem* parentItem = static_cast<YaffsItem*>(parentIndex.internalPointer());
+        parentItem = static_cast<YaffsItem*>(parentIndex.internalPointer());
         if (parentItem && parentItem->isDir()) {
             QString directoryName = QFileDialog::getExistingDirectory(this, "Select directory to import...");
             if (directoryName.length() > 0) {
                 directoryName.replace('\\', '/');
-                mYaffsModel->importDirectory(parentItem, directoryName);
+                PushCommandOntoCommandVector(6,directoryName);
+                //CYaffsModel->importDirectory(parentItem, directoryName);
             }
         }
     }
 }
 //button to save to desktop
-void MainWindow::on_actionExport_triggered() {
+void MainWindow::on_actionExport_triggered() {//not used by yaffs at all
     QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
     if (selectedRows.size() > 0) {
         QString path = QFileDialog::getExistingDirectory(this);
@@ -309,11 +462,11 @@ void MainWindow::on_actionExport_triggered() {
         mUi->statusBar->showMessage("Nothing selected to export");
     }
 }
-
+//closing qt gui
 void MainWindow::on_actionExit_triggered() {
     close();
 }
-
+//reanming using Qt libraries and not yaffs
 void MainWindow::on_actionRename_triggered() {
     QModelIndex index = mUi->treeView->selectionModel()->currentIndex();
     YaffsItem* item = static_cast<YaffsItem*>(index.internalPointer());
@@ -324,22 +477,25 @@ void MainWindow::on_actionRename_triggered() {
     }
 }
 
-void MainWindow::on_actionDelete_triggered() {
-    QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
-    int numRowsDeleted = mYaffsModel->removeRows(selectedRows);
-    mUi->statusBar->showMessage("Deleted " + QString::number(numRowsDeleted) + " items");
+void MainWindow::on_actionDelete_triggered() {// ldelete on yaffs loop and removed from qt
+    selectedRowsDelete = mUi->treeView->selectionModel()->selectedRows();
+    QString PlaceHolder;
+    PushCommandOntoCommandVector(7,PlaceHolder);
+
+    //int numRowsDeleted = CYaffsModel->removeRows(selectedRowsDelete);
+    mUi->statusBar->showMessage("Deleted " + QString::number(itemsDeleted) + " items");
 }
 
-void MainWindow::on_actionEditProperties_triggered() {
+void MainWindow::on_actionEditProperties_triggered() {//Gui realted
     QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
     if (selectedRows.size() > 0) {
-        QDialog* dialog = new DialogEditProperties(*mYaffsModel, selectedRows, this);
+        QDialog* dialog = new DialogEditProperties(*CYaffsModel, selectedRows, this);
         dialog->exec();
     }
     setupActions();
 }
 
-void MainWindow::on_actionAndroidFastboot_triggered() {
+void MainWindow::on_actionAndroidFastboot_triggered() {//Gui realted
     if (mFastbootDialog) {
         mFastbootDialog->show();
     } else {
@@ -348,14 +504,14 @@ void MainWindow::on_actionAndroidFastboot_triggered() {
     }
 }
 
-void MainWindow::on_actionAbout_triggered() {
+void MainWindow::on_actionAbout_triggered() {//Gui realted
     static const QString about("<b>" + APPNAME + " v" + VERSION + "</b><br/>" \
                                "Yet Another Flash File (System) Editor YEAH!<br/><br/>" \
                                "Built on " + QString(__DATE__) + " at " + QString(__TIME__) + "<br/><br/>" );
     QMessageBox::information(this, "About " + APPNAME, about);
 }
 
-void MainWindow::on_actionTime_triggered()
+void MainWindow::on_actionTime_triggered()//timer and must be external to Microos 2
 {
     QString Time = QString::number(OSTimeGet());
     QString about("<b>Time: " + Time + "</b><br/>");
@@ -364,7 +520,7 @@ void MainWindow::on_actionTime_triggered()
 
 }
 
-void MainWindow::on_actionColumnName_triggered() {
+void MainWindow::on_actionColumnName_triggered() {//Gui realted
     if (mUi->actionColumnName->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::NAME);
     } else {
@@ -372,7 +528,7 @@ void MainWindow::on_actionColumnName_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnSize_triggered() {
+void MainWindow::on_actionColumnSize_triggered() {//Gui realted
     if (mUi->actionColumnSize->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::SIZE);
     } else {
@@ -380,7 +536,7 @@ void MainWindow::on_actionColumnSize_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnPermissions_triggered() {
+void MainWindow::on_actionColumnPermissions_triggered() {//Gui realted
     if (mUi->actionColumnPermissions->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::PERMISSIONS);
     } else {
@@ -388,7 +544,7 @@ void MainWindow::on_actionColumnPermissions_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnAlias_triggered() {
+void MainWindow::on_actionColumnAlias_triggered() {//Gui realted
     if (mUi->actionColumnAlias->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::ALIAS);
     } else {
@@ -396,7 +552,7 @@ void MainWindow::on_actionColumnAlias_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnDateAccessed_triggered() {
+void MainWindow::on_actionColumnDateAccessed_triggered() {//Gui realted
     if (mUi->actionColumnDateAccessed->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::DATE_ACCESSED);
     } else {
@@ -404,7 +560,7 @@ void MainWindow::on_actionColumnDateAccessed_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnDateCreated_triggered() {
+void MainWindow::on_actionColumnDateCreated_triggered() {//Gui realted
     if (mUi->actionColumnDateCreated->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::DATE_CREATED);
     } else {
@@ -412,7 +568,7 @@ void MainWindow::on_actionColumnDateCreated_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnDateModified_triggered() {
+void MainWindow::on_actionColumnDateModified_triggered() {//Gui realted
     if (mUi->actionColumnDateModified->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::DATE_MODIFIED);
     } else {
@@ -420,7 +576,7 @@ void MainWindow::on_actionColumnDateModified_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnUser_triggered() {
+void MainWindow::on_actionColumnUser_triggered() {//Gui realted
     if (mUi->actionColumnUser->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::USER);
     } else {
@@ -428,7 +584,7 @@ void MainWindow::on_actionColumnUser_triggered() {
     }
 }
 
-void MainWindow::on_actionColumnGroup_triggered() {
+void MainWindow::on_actionColumnGroup_triggered() {//Gui realted
     if (mUi->actionColumnGroup->isChecked()) {
         mUi->treeView->showColumn(YaffsItem::GROUP);
     } else {
@@ -436,12 +592,12 @@ void MainWindow::on_actionColumnGroup_triggered() {
     }
 }
 
-void MainWindow::on_treeViewHeader_customContextMenuRequested(const QPoint& pos) {
+void MainWindow::on_treeViewHeader_customContextMenuRequested(const QPoint& pos) {//Gui realted
     QPoint p(mUi->treeView->mapToGlobal(pos));
     mHeaderContextMenu.exec(p);
 }
 
-void MainWindow::on_treeView_customContextMenuRequested(const QPoint& pos) {
+void MainWindow::on_treeView_customContextMenuRequested(const QPoint& pos) {//Gui realted
     setupActions();
 
     QPoint p(mUi->treeView->mapToGlobal(pos));
@@ -449,23 +605,25 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint& pos) {
     mContextMenu.exec(p);
 }
 
-void MainWindow::on_modelChanged() {
+void MainWindow::on_modelChanged() {//Gui realted
     setupActions();
 }
 
-void MainWindow::on_treeView_selectionChanged() {
+void MainWindow::on_treeView_selectionChanged() {//Gui realted
     setupActions();
 }
+
 //goes to yaffsmanafer to write to iso file on dekstop
-void MainWindow::exportSelectedItems(const QString& path) {
-    QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
-    if (selectedRows.size() > 0) {
-        YaffsExportInfo* exportInfo = mYaffsManager->exportItems(selectedRows, path);
+void MainWindow::exportSelectedItems(const QString& path) { //last one
+    selectedRowsExport = mUi->treeView->selectionModel()->selectedRows();
+    if (selectedRowsExport.size() > 0) {
+        PushCommandOntoCommandVector(8,path);
+        //exportInfo = CYaffsManager->exportItems(selectedRowsExport, path);
 
         QString status = "Exported " + QString::number(exportInfo->numDirsExported) + " dir(s) and " +
                                        QString::number(exportInfo->numFilesExported) + " file(s).";
         mUi->statusBar->showMessage(status);
-
+        //are messages to display in case file and directory fails to save onto desktop
         int dirFails = exportInfo->listDirExportFailures.size();
         int fileFails = exportInfo->listFileExportFailures.size();
         if (dirFails + fileFails > 0) {
@@ -530,14 +688,14 @@ int MainWindow::identifySelection(const QModelIndexList& selectedRows) {
     return selectionFlags;
 }
 //setting up Gui
-void MainWindow::setupActions() {
+void MainWindow::setupActions() {//Gui related to update it and cannot be put into MicroOS2
     updateWindowTitle();
 
     QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
     int selectionFlags = identifySelection(selectedRows);
     int selectionSize = selectedRows.size();
 
-    if (mYaffsModel->index(0, 0).isValid()) {
+    if (CYaffsModel->index(0, 0).isValid()) {
         mUi->actionExpandAll->setEnabled(true);
         mUi->actionCollapseAll->setEnabled(true);
         mUi->actionSaveAs->setEnabled(true);

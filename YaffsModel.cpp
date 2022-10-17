@@ -37,28 +37,28 @@ YaffsModel::~YaffsModel() {
 
 void YaffsModel::newImage(const QString& newImageName) {
 
-    mYaffsRoot = YaffsItem::createRoot();
-    mItemsNew++;
-    mImageFilename = newImageName;
+//    mYaffsRoot = YaffsItem::createRoot();
+//    mItemsNew++;
+//    mImageFilename = newImageName;
 
     emit layoutChanged();
 }
 //re reading old yaffeys images files
 YaffsReadInfo YaffsModel::openImage(const QString& imageFilename) {
-    mImageFilename = imageFilename;
+    //mImageFilename = imageFilename;
 
     YaffsReadInfo readInfo;
-    memset(&readInfo, 0, sizeof(YaffsReadInfo));
+    //memset(&readInfo, 0, sizeof(YaffsReadInfo));
 
     if (mYaffsRoot == NULL) {
         YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), this);
         if (yaffsControl.open(YaffsControl::OPEN_READ)) {
             if (yaffsControl.readImage()) {
-                readInfo = yaffsControl.getReadInfo();
+                //readInfo = yaffsControl.getReadInfo();
 
-                mItemsNew = 0;
-                mItemsDirty = 0;
-                mItemsDeleted = 0;
+                //mItemsNew = 0;
+                //mItemsDirty = 0;
+                //mItemsDeleted = 0;
 
                 emit layoutChanged();
             }
@@ -458,8 +458,27 @@ int YaffsModel::removeRows(const QModelIndexList& selectedRows) {
         }
     }
 
+    int itemsDeleted = 0;
+    if (mYaffsRoot->hasChildMarkedForDelete()) {
+        QList<int> rowsToDelete;
+
+        //iterate through child items to build up list of items to delete
+        for (int i = 0; i < mYaffsRoot->childCount(); ++i) {
+            YaffsItem* childItem = mYaffsRoot->child(i);
+            if (childItem->isMarkedForDelete()) {
+                rowsToDelete.append(childItem->row());
+            } else if (childItem->hasChildMarkedForDelete()) {
+                itemsDeleted += processChildItemsForDelete(childItem);
+                mYaffsRoot->setHasChildMarkedForDelete(false);
+            }
+        }
+
+        itemsDeleted += calculateAndDeleteContiguousRows(rowsToDelete, mYaffsRoot);
+    }
+    return itemsDeleted;
+
     //iterate through ALL items and process the marked ones
-    return processChildItemsForDelete(mYaffsRoot);
+    //return processChildItemsForDelete(mYaffsRoot);
 }
 
 int YaffsModel::processChildItemsForDelete(YaffsItem* item) {
