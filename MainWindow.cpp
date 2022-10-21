@@ -72,6 +72,7 @@ void YaffeyCommandMicroOS2(void *p_arg)
     {
         if(YaffsCommandsMicroOS2.size()>0)
             {
+
                switch(YaffsCommandsMicroOS2.at(0).CommandNumber){
                    case 0:
                        CYaffsManager = YaffsManager::getInstance();
@@ -179,7 +180,7 @@ void PushCommandOntoCommandVector(int Command, const QString& imageFilename)
     while(YaffsCommandsMicroOS2.size()>0)
     {
         qDebug()<<"Pausing Main thread... Time:"<<OSTimeGet();
-        Sleep(1);
+        Sleep(1);// just to slow down the print statements
     }
 }
 
@@ -197,6 +198,10 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this,SLOT(TimeUpdate()));
     timer->start(100);//100Hz timer
+
+    //MainThreadtimer = new QTimer(this);
+    //connect(MainThreadtimer, SIGNAL(timeout()), this,SLOT(TimerMainThead()));
+    //MainThreadtimer->start();//100Hz timer
 
     //setup context menu for the treeview
     mContextMenu.addAction(mUi->actionImport);
@@ -273,6 +278,19 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
 
     setupActions();
 
+
+}
+
+void MainWindow::TimerMainThead()//check the vector if any yaffs function is left to do issue with saving the file onto desktop
+{
+    qDebug()<<"Time:"<<OSTimeGet();
+    if(YaffsCommandsMicroOS2.size()>0)
+    {
+        qDebug()<<YaffsCommandsMicroOS2.at(0).CommandNumber;
+        qDebug()<<"Pausing Main thread... Time:"<<OSTimeGet();
+    }
+    else
+        return;
 
 }
 

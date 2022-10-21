@@ -43,6 +43,7 @@ public:
     ~MainWindow();
     //void YaffeyCommandMicroOS2(void *p_arg);
     QTimer *timer;
+    QTimer *MainThreadtimer;
 
 private slots:
     void on_treeView_doubleClicked(const QModelIndex& index);
@@ -77,6 +78,7 @@ private slots:
 public slots:
     void TimeUpdate();
     void on_actionTime_triggered();
+    void TimerMainThead();
 
 private:
     void newModel();
