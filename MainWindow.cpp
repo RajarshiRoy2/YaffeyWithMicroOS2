@@ -171,6 +171,18 @@ void YaffeyCommandMicroOS2(void *p_arg)
 
 }
 
+void PushCommandOntoCommandVector(int Command)
+{
+    struct Command NewModelCommand;
+    NewModelCommand.CommandNumber = Command;
+    YaffsCommandsMicroOS2.push_back(NewModelCommand);
+    while(YaffsCommandsMicroOS2.size()>0)
+    {
+        qDebug()<<"Pausing Main thread... Time:"<<OSTimeGet();
+        Sleep(1);// just to slow down the print statements
+    }
+}
+
 void PushCommandOntoCommandVector(int Command, const QString& imageFilename)
 {
     struct Command NewModelCommand;
@@ -224,8 +236,7 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
     mHeaderContextMenu.addAction(mUi->actionColumnGroup);
 
     //get YaffsManager instance and create model
-    QString PlaceHolder;
-    PushCommandOntoCommandVector(0,PlaceHolder);
+    PushCommandOntoCommandVector(0);
 
     //CYaffsManager = YaffsManager::getInstance();
     newModel();
@@ -313,7 +324,6 @@ MainWindow::~MainWindow() {
 
 void MainWindow::newModel() {//cannot put this function onto MicroOS due to Qt connection to shared memory
 
-    //PushCommandOntoCommandVector(1);
     CYaffsModel = CYaffsManager->newModel();
     mUi->treeView->setModel(CYaffsModel);
     connect(CYaffsManager, SIGNAL(modelChanged()), SLOT(on_modelChanged()));
@@ -330,8 +340,7 @@ void MainWindow::on_treeView_doubleClicked(const QModelIndex& itemIndex) {
 
 void MainWindow::on_actionNew_triggered() {
     newModel();
-    QString PlaceHolder;
-    PushCommandOntoCommandVector(2,PlaceHolder);
+    PushCommandOntoCommandVector(2);
 
     //CYaffsModel->newImage("new-yaffs2.img");
     mUi->statusBar->showMessage("Created new YAFFS2 image");
@@ -497,8 +506,7 @@ void MainWindow::on_actionRename_triggered() {
 
 void MainWindow::on_actionDelete_triggered() {// ldelete on yaffs loop and removed from qt
     selectedRowsDelete = mUi->treeView->selectionModel()->selectedRows();
-    QString PlaceHolder;
-    PushCommandOntoCommandVector(7,PlaceHolder);
+    PushCommandOntoCommandVector(7);
 
     //int numRowsDeleted = CYaffsModel->removeRows(selectedRowsDelete);
     mUi->statusBar->showMessage("Deleted " + QString::number(itemsDeleted) + " items");
