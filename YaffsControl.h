@@ -21,6 +21,7 @@
 
 #include "Yaffs2.h"
 #include <cwchar>
+#include <vector>
 
 class YaffsControlObserver {
 public:
@@ -55,7 +56,8 @@ public:
     enum OpenType {
         OPEN_READ,
         OPEN_MODIFY,
-        OPEN_NEW
+        OPEN_NEW,
+        OPEN_NEW_LOG
     };
 
     YaffsControl(const char* imageFileName, YaffsControlObserver* observer);
@@ -72,6 +74,14 @@ public:
     int addDirectory(const yaffs_obj_hdr& objectHeader, int& headerPos);
     int addFile(const yaffs_obj_hdr& objectHeader, int& headerPos, const char* data, int fileSize);
     int addSymLink(const yaffs_obj_hdr& objectHeader, int& headerPos);
+    static u8 mPageData[];
+    static u8* mChunkData;
+    static u8* mSpareData;
+
+    int addTextFile(const yaffs_obj_hdr& objectHeader, int& headerPos, const char* data, int fileSize);
+    int chunkIdLog;
+    int mObjectId;
+    int ObjectSize;
 
 private:
     int readPage();
@@ -86,11 +96,9 @@ private:
 
     YaffsReadInfo mReadInfo;
     YaffsSaveInfo mSaveInfo;
-    static u8 mPageData[];
-    static u8* mChunkData;
-    static u8* mSpareData;
 
-    int mObjectId;
+
+
     int mNumPages;
 };
 

@@ -67,6 +67,9 @@ public:
     int mItemsDeleted;
     int processChildItemsForDelete(YaffsItem* item);
     int calculateAndDeleteContiguousRows(QList<int>& rows, YaffsItem* parentItem);
+    void writeToFile();
+    YaffsItem* LogFile;
+    bool LogFileFound;
 
 protected:
     //from YaffsControlObserver
@@ -80,6 +83,7 @@ private:
 
     int calculateAndDeleteOneRows(QList<int>& rows, YaffsItem* parentItem);
     int deleteRows(int row, int count, const QModelIndex& parentIndex);
+
 
 private:
 

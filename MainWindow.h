@@ -97,7 +97,6 @@ private:
     QMenu mContextMenu;
     QMenu mHeaderContextMenu;
     QDialog* mFastbootDialog;           //owned
-    //std::vector<Command>YaffsCommandsMicroOS2;
 
 };
 

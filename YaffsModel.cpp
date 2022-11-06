@@ -21,7 +21,8 @@
 #include "YaffsModel.h"
 #include "os_cpu.h"
 #include "shared_memory.h"
-
+QString YaffsLogMemory = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
+QString YaffsLogMemoryName = "new-yaffs2.img";
 YaffsModel::YaffsModel(QObject* parent) : QAbstractItemModel(parent) {
     mYaffsRoot = NULL;
     mYaffsSaveControl = NULL;
@@ -29,6 +30,7 @@ YaffsModel::YaffsModel(QObject* parent) : QAbstractItemModel(parent) {
     mItemsNew = 0;
     mItemsDirty = 0;
     mItemsDeleted = 0;
+    LogFileFound = false;
 }
 
 YaffsModel::~YaffsModel() {
@@ -37,34 +39,35 @@ YaffsModel::~YaffsModel() {
 
 void YaffsModel::newImage(const QString& newImageName) {
 
-//    mYaffsRoot = YaffsItem::createRoot();
-//    mItemsNew++;
-//    mImageFilename = newImageName;
+    mYaffsRoot = YaffsItem::createRoot();
+    mItemsNew++;
+    mImageFilename = newImageName;
+    LogFileFound = false;
 
     emit layoutChanged();
 }
 //re reading old yaffeys images files
 YaffsReadInfo YaffsModel::openImage(const QString& imageFilename) {
-    //mImageFilename = imageFilename;
+
+    mImageFilename = imageFilename;
 
     YaffsReadInfo readInfo;
-    //memset(&readInfo, 0, sizeof(YaffsReadInfo));
+    memset(&readInfo, 0, sizeof(YaffsReadInfo));
 
     if (mYaffsRoot == NULL) {
         YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), this);
         if (yaffsControl.open(YaffsControl::OPEN_READ)) {
             if (yaffsControl.readImage()) {
-                //readInfo = yaffsControl.getReadInfo();
+                readInfo = yaffsControl.getReadInfo();
 
-                //mItemsNew = 0;
-                //mItemsDirty = 0;
-                //mItemsDeleted = 0;
+                mItemsNew = 0;
+                mItemsDirty = 0;
+                mItemsDeleted = 0;
 
                 emit layoutChanged();
             }
         }
     }
-
     return readInfo;
 }
 //saves to yaffs from deskptop
@@ -74,9 +77,16 @@ void YaffsModel::importFile(YaffsItem* parentItem, const QString& filenameWithPa
         int filesize = fileInfo.size();
 
         YaffsItem* importedFile = YaffsItem::createFile(parentItem, filenameWithPath, filesize);
+        if(importedFile->getExternalFilename()=="Log.txt")
+        {
+            LogFile = importedFile;
+            LogFileFound = true;
+            //qDebug()<<filenameWithPath;
+        }
         parentItem->appendChild(importedFile);
 
-        //std::string str = "abc";
+        //can add log fuile from using this code you added
+        //std::string str = "log.txt";
         //YaffsItem* RajimportedFile = YaffsItem::createFile(parentItem, QString::fromStdString(str), 3);
         //parentItem->appendChild(RajimportedFile);
 
@@ -124,10 +134,13 @@ void YaffsModel::CreateNewDirectory() {
         emit layoutChanged();
     }
 }
-
+//clicking save as on the yaffs to save iso file onto desktop
 YaffsSaveInfo YaffsModel::saveAs(const QString& filename) {
     YaffsSaveInfo saveInfo;
     memset(&saveInfo, 0, sizeof(YaffsSaveInfo));
+    //qDebug()<<"saving"<<Qt::endl;
+    //qDebug()<<filename<<Qt::endl;//name of the iso file "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img"
+    //qDebug()<<mImageFilename<<Qt::endl;// "new-yaffs2.img"
 
     if (filename != mImageFilename) {
         mYaffsSaveControl = new YaffsControl(filename.toStdString().c_str(), NULL);
@@ -186,20 +199,77 @@ void YaffsModel::saveDirectory(YaffsItem* dirItem) {
         dirItem->setCondition(YaffsItem::CLEAN);
     }
 }
-//saves files to desktop
+
+//saves files to desktop from save as to iso file
 void YaffsModel::saveFile(YaffsItem* fileItem) {
     if (fileItem) {
         YaffsItem* parentItem = fileItem->parent();
         qDebug() << "f: " << fileItem->getFullPath() << ", Parent: " << parentItem->getFullPath();
+        if(fileItem->getFullPath() == "/Log.txt")
+        {
 
-        if (fileItem->isFile()) {
+            int newObjectId = -1;
+            int newHeaderPos = -1;
+            bool saved = false;
+
+            if(fileItem->getFileSize() == 0)//new log file so make new file from scratch
+            {
+
+                int filesize = 1;
+                QString filename = fileItem->getExternalFilename();
+
+                char* data = new char[filesize];
+                fileItem->setFileSize(filesize);
+
+                std::fill(data, data + filesize, OSTimeGet());//into to char so not accurate 100% look at ASCII table for concversion
+                for(int i =0 ; i<filesize; i++)
+                {
+                    qDebug()<<(int)data[i];
+                }
+
+                newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);
+                saved = true;
+
+                delete[] data;
+            }
+            else
+            {
+                int filesize = fileItem->getFileSize();
+                qDebug()<<"File more then 0";
+                int headerPosition = fileItem->getHeaderPosition();
+                YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), NULL);
+                if (yaffsControl.open(YaffsControl::OPEN_READ)) {
+                    char* data = yaffsControl.extractFile(headerPosition);//reading old iso files from that file and now can change data char array with new numbers
+
+                    if (data != NULL) {
+                        newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);//saving the txt file to it
+                        for(int i =0 ; i<filesize; i++)
+                        {
+                            qDebug()<<(int)data[i];
+                        }
+                        saved = true;
+                    }
+
+
+                }
+            }
+
+            if (saved) {
+                fileItem->setHeaderPosition(newHeaderPos);
+                fileItem->setObjectId(newObjectId);
+                fileItem->setCondition(YaffsItem::CLEAN);
+            }
+        }
+        else if (fileItem->isFile() && fileItem->getFullPath() != "/Log.txt") {
             YaffsItem::Condition condition = fileItem->getCondition();
             bool saved = false;
             int filesize = fileItem->getFileSize();
+            //qDebug()<<"FileSize: "<<filesize; //7
+            //qDebug()<<"FileSize: "<<fileItem->getExternalFilename();
             int newObjectId = -1;
             int newHeaderPos = -1;
 
-            if (condition == YaffsItem::NEW) {
+            if (condition == YaffsItem::NEW) {//reading the file and passing to break into chunks
                 char* data = new char[filesize];
                 QString filename = fileItem->getExternalFilename();
                 FILE* file = fopen(filename.toStdString().c_str(), "rb");
@@ -211,11 +281,13 @@ void YaffsModel::saveFile(YaffsItem* fileItem) {
                     }
                 }
                 delete[] data;
-            } else {
+            }
+            else
+            {
                 int headerPosition = fileItem->getHeaderPosition();
                 YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), NULL);
                 if (yaffsControl.open(YaffsControl::OPEN_READ)) {
-                    char* data = yaffsControl.extractFile(headerPosition);
+                    char* data = yaffsControl.extractFile(headerPosition);//reading old iso files
                     if (data != NULL) {
                         newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);
                         saved = true;

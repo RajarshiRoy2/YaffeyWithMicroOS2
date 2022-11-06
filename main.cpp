@@ -20,8 +20,6 @@
 #include "shared_memory.h"
 #include "MainWindow.h"
 #include "ucos_ii.h"
-//#define  TASK0_STK_SIZE                         250
-//CPU_STK  Task0Stk[TASK0_STK_SIZE];
 
 void Task0 (void *p_arg)
 {
@@ -59,37 +57,13 @@ void Task1 (void *p_arg)
         }
     }
 }
-//void Task1 (void *p_arg)
-//{
 
-//    while(1)
-//    {
-//        qDebug()<<"Starting Yaffey Gui...";
-//    }
-//    //char* argv= " ";
-//    //int argc = 0;
-//    //QApplication *app = new QApplication(argc,&argv);
-
-//    //QString arg;
-//    //if (argc > 0) {
-//    //    arg = argv[1];
-//    //}
-
-
-//   // MainWindow w(NULL, arg);
-//   // w.show();
-//    //app->exec();
-//}
 
 int main(int argc, char* argv[]) {
     QString arg;
     if (argc > 0) {
         arg = argv[1];
     }
-
-    ///OSInit();
-    //OSTaskCreate(Task0, (void *)0, &Task0Stk[TASK0_STK_SIZE - 1], 0);
-    //OSStart();
 
     QApplication a(argc, argv);
     MainWindow w(NULL, arg);

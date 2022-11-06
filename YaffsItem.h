@@ -119,6 +119,7 @@ public:
     int getHeaderPosition() const { return mHeaderPosition; }
     const yaffs_obj_hdr& getHeader() const { return mYaffsObjectHeader; }
     int getFileSize() const { return mYaffsObjectHeader.file_size_low; }
+    void setFileSize(int size) {  mYaffsObjectHeader.file_size_low = size; }
     uint getUserId() const { return mYaffsObjectHeader.yst_uid; }
     uint getGroupId() const { return mYaffsObjectHeader.yst_gid; }
     uint getPermissions() const { return mYaffsObjectHeader.yst_mode; }

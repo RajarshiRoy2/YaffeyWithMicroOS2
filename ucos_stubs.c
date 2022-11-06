@@ -76,10 +76,10 @@ void OSTimeTickHook(){}
 void OSTaskIdleHook()
 {
 
-    while(OSRunning)
-    {
+    //while(OSRunning)
+    //{
         // be here and pause idle task
-    }
+    //}
 
 }
 

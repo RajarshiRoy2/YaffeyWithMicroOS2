@@ -65,7 +65,7 @@ void YaffsManager::on_model_DataChanged(const QModelIndex& topLeft, const QModel
 void YaffsManager::on_model_LayoutChanged() {
     emit modelChanged();
 }
-//goes here from file and dictectory to save to deksitop
+//goes here from file and dictectory to save to deksitop to read it
 void YaffsManager::exportItem(const YaffsItem* item, const QString& path) {
     if (item) {
         if (item->isFile()) {
@@ -76,7 +76,7 @@ void YaffsManager::exportItem(const YaffsItem* item, const QString& path) {
     }
 }
 
-//file save
+//file save to desktop individual file to read it
 void YaffsManager::exportFile(const YaffsItem* item, const QString& path) {
     bool result = false;
     if (item->isFile() && item->getCondition() != YaffsItem::NEW) {
@@ -100,7 +100,7 @@ void YaffsManager::exportFile(const YaffsItem* item, const QString& path) {
         mYaffsExportInfo->listFileExportFailures.append(item);
     }
 }
-//directoey save with files in it maybe to desktop
+//directoey save with files in it to desktop
 void YaffsManager::exportDirectory(const YaffsItem* item, const QString& path) {
     bool result = false;
     if (item->isDir() && item->getCondition() != YaffsItem::NEW) {
@@ -127,10 +127,11 @@ void YaffsManager::exportDirectory(const YaffsItem* item, const QString& path) {
         mYaffsExportInfo->listDirExportFailures.append(item);
     }
 }
-//writeing to the iso file on desktop
+//exporting file to desktop
 bool YaffsManager::saveDataToFile(const QString& filename, const char* data, int length) {
     bool result = false;
     QFile file(filename);
+    //qDebug()<<filename;
     bool open = file.open(QIODevice::WriteOnly);
     if (open) {
         result = (file.write(data, length) != -1);
