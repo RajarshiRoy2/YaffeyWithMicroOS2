@@ -215,17 +215,21 @@ void YaffsModel::saveFile(YaffsItem* fileItem) {
             if(fileItem->getFileSize() == 0)//new log file so make new file from scratch
             {
 
-                int filesize = 1;
-                QString filename = fileItem->getExternalFilename();
-
+                int filesize = 4;
                 char* data = new char[filesize];
                 fileItem->setFileSize(filesize);
 
-                std::fill(data, data + filesize, OSTimeGet());//into to char so not accurate 100% look at ASCII table for concversion
-                for(int i =0 ; i<filesize; i++)
-                {
-                    qDebug()<<(int)data[i];
-                }
+                unsigned int OSTime = OSTimeGet();
+
+                memcpy(data, &OSTime, sizeof(unsigned int));
+                //data[4] = ' ';
+
+                qDebug()<<OSTime;
+
+                //for(int i =0 ; i<filesize; i++)
+                //{
+                //    qDebug()<<(unsigned int)data[i];
+                //}
 
                 newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);
                 saved = true;
@@ -235,18 +239,23 @@ void YaffsModel::saveFile(YaffsItem* fileItem) {
             else
             {
                 int filesize = fileItem->getFileSize();
-                qDebug()<<"File more then 0";
+
                 int headerPosition = fileItem->getHeaderPosition();
                 YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), NULL);
                 if (yaffsControl.open(YaffsControl::OPEN_READ)) {
                     char* data = yaffsControl.extractFile(headerPosition);//reading old iso files from that file and now can change data char array with new numbers
 
+                    unsigned int OldNumber = 0;
+                    memcpy(&OldNumber,data,4);
+                    qDebug()<<OldNumber;
+
                     if (data != NULL) {
                         newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);//saving the txt file to it
-                        for(int i =0 ; i<filesize; i++)
-                        {
-                            qDebug()<<(int)data[i];
-                        }
+                        //for(int i =0 ; i<filesize; i++)
+                        //{
+                            //qDebug()<<(unsigned int)data[i];
+                        //}
+
                         saved = true;
                     }
 
