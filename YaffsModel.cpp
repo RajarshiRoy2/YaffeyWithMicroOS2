@@ -260,12 +260,12 @@ void YaffsModel::writeToFile(YaffsItem *parentItem)
 
 
 
-                unsigned int OSTime = 66;//OSTimeGet();
+               // unsigned int OSTime = 66;//OSTimeGet();
 
                 //memcpy(data, &OSTime, sizeof(unsigned int));
                 memcpy(data, &myChar, sizeOfChar);
 
-                qDebug()<<OSTime;
+                //qDebug()<<OSTime;
                 filesize = filesize + sizeOfChar;
                 LogFile->setFileSize(filesize);
                 newObjectId = mYaffsSaveControl->addTextFile(LogFile->getHeader(), newHeaderPos, data, filesize);
@@ -274,6 +274,8 @@ void YaffsModel::writeToFile(YaffsItem *parentItem)
                 saved = true;
 
                 delete[] data;
+                delete mYaffsSaveControl;
+                mYaffsSaveControl = NULL;
 
             if (saved) {
                 LogFile->setHeaderPosition(newHeaderPos);

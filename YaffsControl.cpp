@@ -137,8 +137,8 @@ int YaffsControl::addTextFile(const yaffs_obj_hdr& objectHeader, int& headerPos,
 
     const char* dataPtr = data;
 
-    unsigned int i1 = (unsigned int)*data;
-    qDebug()<<i1;
+    //unsigned int i1 = (unsigned int)*data;
+    //qDebug()<<i1;
 
     memcpy(mChunkData, dataPtr, CHUNK_SIZE);
     if (writePage(objectId, ++chunks, CHUNK_SIZE)) {
