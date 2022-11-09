@@ -30,6 +30,8 @@
 #define SELECTED_FILE               0x4
 #define SELECTED_SYMLINK            0x8
 #define SELECTED_SINGLE             0x10
+void PushCommandOntoCommandVector(int Command);
+void PushCommandOntoCommandVector(int Command, const QString& imageFilename);
 
 namespace Ui {
     class MainWindow;

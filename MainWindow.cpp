@@ -62,7 +62,7 @@ QModelIndexList selectedRowsExport;
 int itemsDeleted;
 YaffsExportInfo* exportInfo;
 bool LogFileExists;
-
+QFile file("C:/Users/royra/OneDrive/Desktop/new-yaffs2.img");
 void YaffeyCommandMicroOS2(void *p_arg)
 {
     for(;;)
@@ -81,12 +81,7 @@ void YaffeyCommandMicroOS2(void *p_arg)
                         break;
                    case 2:
                         CYaffsModel->newImage("new-yaffs2.img");
-                       //CYaffsModel->mYaffsRoot = YaffsItem::createRoot();
-                       //CYaffsModel->mItemsNew++;
-                       //CYaffsModel->mImageFilename = "new-yaffs2.img";
-                       //emit CYaffsModel->layoutChanged();
-
-                       YaffsCommandsMicroOS2.pop_back();
+                        YaffsCommandsMicroOS2.pop_back();
                         break;
                    case 3:
                        readInfo = CYaffsModel->openImage(YaffsCommandsMicroOS2.at(0).imageFilename);
@@ -147,14 +142,51 @@ void YaffeyCommandMicroOS2(void *p_arg)
                    case 9:
                         LogFileExists = true;
                         if(!CYaffsModel->LogFileFound)
-                            CYaffsModel->importFile(parentItem, "Log.txt");
+                        {
+                            //QString filename = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
+                            CYaffsModel->importFile(CYaffsModel->mYaffsRoot, "Log.txt");
+//                            int newObjectId = -1;
+//                            int newHeaderPos = -1;
+//                            int filesize = 4;
+//                            char* data = new char[filesize];
+//                            bool saved = false;
+//                            CYaffsModel->LogFile->setFileSize(filesize);
+
+//                            unsigned int OSTime = OSTimeGet();
+//                            memcpy(data, &OSTime, sizeof(unsigned int));
+
+//                            qDebug()<<OSTime;
+
+//                             CYaffsModel->mYaffsSaveControl = new YaffsControl(filename.toStdString().c_str(), NULL);
+//                             CYaffsModel->mYaffsSaveControl->open(YaffsControl::OPEN_NEW);
+
+//                            newObjectId = CYaffsModel->mYaffsSaveControl->addTextFile(CYaffsModel->LogFile->getHeader(), newHeaderPos, data, filesize);
+//                            CYaffsModel->saveDirectory(CYaffsModel->mYaffsRoot);
+//                            saved = true;
+
+//                            delete[] data;
+
+//                            delete CYaffsModel->mYaffsSaveControl;
+//                            CYaffsModel->mYaffsSaveControl = NULL;
+
+//                            if (saved) {
+//                                CYaffsModel->LogFile->setHeaderPosition(newHeaderPos);
+//                                CYaffsModel->LogFile->setObjectId(newObjectId);
+//                                CYaffsModel->LogFile->setCondition(YaffsItem::CLEAN);
+//                            }
+                        }
                         else
                             qDebug()<<"Log file found";
 
                         YaffsCommandsMicroOS2.pop_back();
                         break;
                    case 10:
-                        //CYaffsModel->writeToFile();
+                        CYaffsModel->writeToFile(parentItem);
+                        //qDebug()<<"Trying to save";
+                        //file.remove();
+                        //Sleep(1);
+                        //saveInfo = CYaffsModel->saveAs("C:/Users/royra/OneDrive/Desktop/new-yaffs2.img");
+                        //Sleep(1);
                         YaffsCommandsMicroOS2.pop_back();
                         break;
                    default:
@@ -288,25 +320,10 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
 
 void MainWindow::TimerMainThead()//check the vector if any yaffs function is left to do issue with saving the file onto desktop
 {
-    if(LogFileExists && YaffsCommandsMicroOS2.size()==0 )
+    if(LogFileExists && YaffsCommandsMicroOS2.size() == 0 )
     {
-        PushCommandOntoCommandVector(10);
-//        qDebug()<<"saving";
-
-//        QString YaffsLogMemory = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
-//        QFile file (YaffsLogMemory);
-//        if(file.exists())
-//        {
-//            qDebug()<<"File exists";
-//            file.remove();
-//        }
-//        else
-//        {
-//            qDebug()<<"File doesnte exist";
-//        }
-//        PushCommandOntoCommandVector(4,YaffsLogMemory);
+      PushCommandOntoCommandVector(10);
     }
-
 }
 
 void MainWindow::TimeUpdate()//OSTickISR equivalent
@@ -415,6 +432,7 @@ void MainWindow::openImage(const QString& imageFilename) {//done
         }
         setupActions();//qt realted Gui changed from shared memory
         OSRunning = true;
+        LogFileExists = true;
     }
 }
 
@@ -439,8 +457,8 @@ void MainWindow::on_actionSaveAs_triggered() {//done and the rest are Qt Gui rel
         if (saveAsFilename.length() > 0) {
 
             //delete old iso file
-            QFile file (saveAsFilename);
-            file.remove();
+            //QFile file (saveAsFilename);
+            //file.remove();
             PushCommandOntoCommandVector(4,saveAsFilename);
             qDebug()<<saveAsFilename;
 
@@ -499,7 +517,7 @@ void MainWindow::on_actionImport_triggered() {//done
 }
 //button to save to desktop
 void MainWindow::on_actionExport_triggered() {//not used by yaffs at all
-     //LogFileExists = false;
+     LogFileExists = false;
     QModelIndexList selectedRows = mUi->treeView->selectionModel()->selectedRows();
     if (selectedRows.size() > 0) {
         QString path = QFileDialog::getExistingDirectory(this);
@@ -514,6 +532,7 @@ void MainWindow::on_actionExport_triggered() {//not used by yaffs at all
 }
 //closing qt gui
 void MainWindow::on_actionExit_triggered() {
+
     close();
 }
 //reanming using Qt libraries and not yaffs

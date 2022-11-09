@@ -57,7 +57,7 @@ public:
         OPEN_READ,
         OPEN_MODIFY,
         OPEN_NEW,
-        OPEN_NEW_LOG
+        WRITE_LOG
     };
 
     YaffsControl(const char* imageFileName, YaffsControlObserver* observer);
@@ -82,6 +82,7 @@ public:
     int chunkIdLog;
     int mObjectId;
     int ObjectSize;
+    static u8* Header;
 
 private:
     int readPage();

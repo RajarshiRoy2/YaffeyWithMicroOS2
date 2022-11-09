@@ -67,9 +67,15 @@ public:
     int mItemsDeleted;
     int processChildItemsForDelete(YaffsItem* item);
     int calculateAndDeleteContiguousRows(QList<int>& rows, YaffsItem* parentItem);
-    void writeToFile();
+    void writeToFile(YaffsItem *parentItem);
     YaffsItem* LogFile;
     bool LogFileFound;
+    char* Logdata;
+    int LogdataSize;
+    bool LogFileReadOnce;
+    std::vector<unsigned int>TimeLog;
+    void saveDirectory(YaffsItem* dirItem);
+    int Once=0;
 
 protected:
     //from YaffsControlObserver
@@ -77,7 +83,7 @@ protected:
     void readComplete();
 
 private:
-    void saveDirectory(YaffsItem* dirItem);
+    //void saveDirectory(YaffsItem* dirItem);
     void saveFile(YaffsItem* dirItem);
     void saveSymLink(YaffsItem* dirItem);
 

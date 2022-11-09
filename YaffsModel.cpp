@@ -26,11 +26,14 @@ QString YaffsLogMemoryName = "new-yaffs2.img";
 YaffsModel::YaffsModel(QObject* parent) : QAbstractItemModel(parent) {
     mYaffsRoot = NULL;
     mYaffsSaveControl = NULL;
+    LogFile = NULL;
 
     mItemsNew = 0;
     mItemsDirty = 0;
     mItemsDeleted = 0;
     LogFileFound = false;
+    LogFileReadOnce = false;
+    Once=0;
 }
 
 YaffsModel::~YaffsModel() {
@@ -144,7 +147,7 @@ YaffsSaveInfo YaffsModel::saveAs(const QString& filename) {
 
     if (filename != mImageFilename) {
         mYaffsSaveControl = new YaffsControl(filename.toStdString().c_str(), NULL);
-        if (mYaffsSaveControl->open(YaffsControl::OPEN_NEW)) {
+        if (mYaffsSaveControl->open(YaffsControl::OPEN_NEW)) {//WRITE_LOG OPEN_NEW
             saveDirectory(mYaffsRoot);
             saveInfo = mYaffsSaveControl->getSaveInfo();
             saveInfo.result = (saveInfo.numDirsFailed + saveInfo.numFilesFailed + saveInfo.numSymLinksFailed == 0);
@@ -174,10 +177,13 @@ void YaffsModel::saveDirectory(YaffsItem* dirItem) {
 
         int newObjectId = -1;
         int newHeaderPos = -1;
+
         if (parentItem) {
             newObjectId = mYaffsSaveControl->addDirectory(dirItem->getHeader(), newHeaderPos);
+            qDebug()<<"Saving directory"<<newHeaderPos;
         } else {
             newObjectId = mYaffsSaveControl->addRoot(dirItem->getHeader(), newHeaderPos);
+            qDebug()<<"Saving directory root"<<newHeaderPos;
         }
         dirItem->setHeaderPosition(newHeaderPos);
         dirItem->setObjectId(newObjectId);
@@ -188,10 +194,13 @@ void YaffsModel::saveDirectory(YaffsItem* dirItem) {
             childItem->setParentObjectId(newObjectId);
 
             if (childItem->isDir()) {
+                qDebug()<<"directoery saved";
                 saveDirectory(childItem);
             } else if (childItem->isFile()) {
+                qDebug()<<"file saved";
                 saveFile(childItem);
             } else if (childItem->isSymLink()) {
+                qDebug()<<"syslink saved";
                 saveSymLink(childItem);
             }
         }
@@ -200,8 +209,90 @@ void YaffsModel::saveDirectory(YaffsItem* dirItem) {
     }
 }
 
+void YaffsModel::writeToFile(YaffsItem *parentItem)
+{
+    if(LogFile != NULL)
+    {
+        qDebug()<<"data ss";
+        if(LogFile->getFullPath() == "/Log.txt")// when its new log file
+        {
+
+            int newObjectId = -1;
+            int newHeaderPos = -1;
+            bool saved = false;
+            int filesize = LogFile->getFileSize();
+
+            int sizeOfChar = 1;
+
+        //    if(LogFile->getFileSize() == 0)//new log file so make new file from scratch
+        //    {
+            char myChar = 'A';
+            filesize = filesize + sizeOfChar;
+
+            char* data = new char[sizeOfChar];//filesize
+            LogFile->setFileSize(filesize);
+                if(Once==0 || mYaffsSaveControl == NULL)
+                {
+                    mYaffsSaveControl = new YaffsControl("C:/Users/royra/OneDrive/Desktop/new-yaffs2.img", NULL);
+                    mYaffsSaveControl->open(YaffsControl::WRITE_LOG);//WRITE_LOG OPEN_NEW
+                    YaffsItem* parentItem = mYaffsRoot->parent();
+                    if (parentItem) {
+                        qDebug() << "d: " << mYaffsRoot->getFullPath() << ", Parent: " << parentItem->getFullPath();
+                    } else {
+                        qDebug() << "d: " << mYaffsRoot->getFullPath() << ", Parent: NULL";
+                    }
+
+                    int newObjectId = -1;
+                    int newHeaderPos = -1;
+
+                    if (parentItem) {
+                        newObjectId = mYaffsSaveControl->addDirectory(mYaffsRoot->getHeader(), newHeaderPos);
+                        qDebug()<<"Saving directory"<<newHeaderPos;
+                    } else {
+                        newObjectId = mYaffsSaveControl->addRoot(mYaffsRoot->getHeader(), newHeaderPos);
+                        qDebug()<<"Saving directory root"<<newHeaderPos;
+                    }
+                    mYaffsRoot->setHeaderPosition(newHeaderPos);
+                    mYaffsRoot->setObjectId(newObjectId);
+                    newObjectId = mYaffsSaveControl->addFile(LogFile->getHeader(), newHeaderPos, data, filesize);
+                    Once++;
+                }
+
+
+
+                unsigned int OSTime = 66;//OSTimeGet();
+
+                //memcpy(data, &OSTime, sizeof(unsigned int));
+                memcpy(data, &myChar, sizeOfChar);
+
+                qDebug()<<OSTime;
+                filesize = filesize + sizeOfChar;
+                LogFile->setFileSize(filesize);
+                newObjectId = mYaffsSaveControl->addTextFile(LogFile->getHeader(), newHeaderPos, data, filesize);
+
+
+                saved = true;
+
+                delete[] data;
+
+            if (saved) {
+                LogFile->setHeaderPosition(newHeaderPos);
+                LogFile->setObjectId(newObjectId);
+                LogFile->setCondition(YaffsItem::CLEAN);
+            }
+
+
+        }
+    }
+    else //when reading old log file
+    {
+
+    }
+}
+
 //saves files to desktop from save as to iso file
 void YaffsModel::saveFile(YaffsItem* fileItem) {
+
     if (fileItem) {
         YaffsItem* parentItem = fileItem->parent();
         qDebug() << "f: " << fileItem->getFullPath() << ", Parent: " << parentItem->getFullPath();
@@ -211,57 +302,100 @@ void YaffsModel::saveFile(YaffsItem* fileItem) {
             int newObjectId = -1;
             int newHeaderPos = -1;
             bool saved = false;
+            int filesize = fileItem->getFileSize();
+
+            int sizeOfChar = 1;
 
             if(fileItem->getFileSize() == 0)//new log file so make new file from scratch
             {
 
-                int filesize = 4;
-                char* data = new char[filesize];
+                filesize = filesize + sizeOfChar;
+
+                char* data = new char[sizeOfChar];//filesize
                 fileItem->setFileSize(filesize);
 
-                unsigned int OSTime = OSTimeGet();
-
-                memcpy(data, &OSTime, sizeof(unsigned int));
-                //data[4] = ' ';
+                unsigned int OSTime = 66;//OSTimeGet();
+                char myChar = 'A';
+                //memcpy(data, &OSTime, sizeof(unsigned int));
+                memcpy(data, &myChar, sizeOfChar);
 
                 qDebug()<<OSTime;
 
-                //for(int i =0 ; i<filesize; i++)
-                //{
-                //    qDebug()<<(unsigned int)data[i];
-                //}
-
                 newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);
+
+                for(int i = 0;i < 10; i++)
+                {
+
+                    filesize = filesize + sizeOfChar;
+                    fileItem->setFileSize(filesize);
+                    newObjectId = mYaffsSaveControl->addTextFile(fileItem->getHeader(), newHeaderPos, data, filesize);
+                }
+
                 saved = true;
 
                 delete[] data;
             }
-            else
-            {
-                int filesize = fileItem->getFileSize();
+//            else
+//            {
+////                filesize = filesize + 4;
+////                char* data = new char[4];//filesize
+////                fileItem->setFileSize(filesize);
 
-                int headerPosition = fileItem->getHeaderPosition();
-                YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), NULL);
-                if (yaffsControl.open(YaffsControl::OPEN_READ)) {
-                    char* data = yaffsControl.extractFile(headerPosition);//reading old iso files from that file and now can change data char array with new numbers
+////                unsigned int OSTime = OSTimeGet();
+////                memcpy(data, &OSTime, sizeof(unsigned int));
 
-                    unsigned int OldNumber = 0;
-                    memcpy(&OldNumber,data,4);
-                    qDebug()<<OldNumber;
+////                qDebug()<<OSTime;
 
-                    if (data != NULL) {
-                        newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);//saving the txt file to it
-                        //for(int i =0 ; i<filesize; i++)
-                        //{
-                            //qDebug()<<(unsigned int)data[i];
-                        //}
+//                filesize = filesize + sizeOfChar;
+//                char* data = new char[sizeOfChar];//filesize
+//                fileItem->setFileSize(filesize);
 
-                        saved = true;
-                    }
+//                unsigned int OSTime = 66;//OSTimeGet();
+//                char myChar = 'A';
+//                //memcpy(data, &OSTime, sizeof(unsigned int));
+//                memcpy(data, &myChar, sizeOfChar);
 
 
-                }
-            }
+//                //newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);
+//                newObjectId = mYaffsSaveControl->addTextFile(fileItem->getHeader(), newHeaderPos, data, filesize);
+
+//                saved = true;
+
+//                delete[] data;
+//            }
+//            else
+//            {
+//                int filesize = fileItem->getFileSize();
+
+//                int headerPosition = fileItem->getHeaderPosition();
+//                qDebug()<<"File headerpositin:"<<headerPosition;
+//                YaffsControl yaffsControl(mImageFilename.toStdString().c_str(), NULL);
+//                if (yaffsControl.open(YaffsControl::OPEN_READ)) {
+//                    char* data = yaffsControl.extractFile(headerPosition);//reading old iso files from that file and now can change data char array with new numbers
+
+//                    unsigned int OldNumber = 0;
+//                    memcpy(&OldNumber,data,sizeof(unsigned int));
+//                    qDebug()<<"Old number:";
+//                    qDebug()<<OldNumber;
+
+//                    unsigned int OSTime = OSTimeGet();
+//                    delete [] data;//deleteing old numbers
+//                    data = new char[4];
+//                    memcpy(data, &OSTime, sizeof(unsigned int));
+
+//                    qDebug()<<"New number saved:";
+//                    qDebug()<<OSTime;
+
+//                    if (data != NULL) {
+//                        newObjectId = mYaffsSaveControl->addFile(fileItem->getHeader(), newHeaderPos, data, filesize);//saving the txt file to it
+
+//                        saved = true;
+//                    }
+
+
+//                }
+//                qDebug()<<"OldNumber";
+//            }
 
             if (saved) {
                 fileItem->setHeaderPosition(newHeaderPos);
@@ -269,7 +403,7 @@ void YaffsModel::saveFile(YaffsItem* fileItem) {
                 fileItem->setCondition(YaffsItem::CLEAN);
             }
         }
-        else if (fileItem->isFile() && fileItem->getFullPath() != "/Log.txt") {
+        if (fileItem->isFile() && fileItem->getFullPath() != "/Log.txt") {
             YaffsItem::Condition condition = fileItem->getCondition();
             bool saved = false;
             int filesize = fileItem->getFileSize();

@@ -21,44 +21,6 @@
 #include "MainWindow.h"
 #include "ucos_ii.h"
 
-void Task0 (void *p_arg)
-{
-    for(;;)
-    {
-        if(OSRunning)
-        {
-            qDebug()<<"Yaffs started so pausing idle task..."<<OSTimeGet()<<Qt::endl;
-            qDebug()<<"Idle counter..."<<OSIdleCtr<<Qt::endl;
-            Sleep(100);
-        }
-        else
-        {
-            qDebug()<<"Yaffs didnt start so not pausing idle task..."<<OSTimeGet()<<Qt::endl;
-            qDebug()<<"Idle counter..."<<OSIdleCtr<<Qt::endl;
-            Sleep(100);
-        }
-        //signal(SIGINT,&sig_handler2);
-    }
-}
-
-void Task1 (void *p_arg)
-{
-    for(;;)
-    {
-        if(OSRunning)
-        {
-            qDebug()<<"NewFile true task 1..."<<OSTimeGet();
-            Sleep(1000);
-        }
-        else
-        {
-            qDebug()<<"NewFile false task 1..."<<OSTimeGet();
-            Sleep(1000);
-        }
-    }
-}
-
-
 int main(int argc, char* argv[]) {
     QString arg;
     if (argc > 0) {
@@ -68,8 +30,13 @@ int main(int argc, char* argv[]) {
     QApplication a(argc, argv);
     MainWindow w(NULL, arg);
     w.show();
+    a.exec();
 
+   // QString File = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
+   // PushCommandOntoCommandVector(4,File);
 
-    return a.exec();
+   // qDebug()<<"closed";
+
+    return 0;
 }
 

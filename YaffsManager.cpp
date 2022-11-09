@@ -80,17 +80,25 @@ void YaffsManager::exportItem(const YaffsItem* item, const QString& path) {
 void YaffsManager::exportFile(const YaffsItem* item, const QString& path) {
     bool result = false;
     if (item->isFile() && item->getCondition() != YaffsItem::NEW) {
+        qDebug()<<"Trying to export file";
         int headerPosition = item->getHeaderPosition();
         int filesize = item->getFileSize();
         QString imageFilename = mYaffsModel->getImageFilename();
+        qDebug()<<imageFilename;
         YaffsControl yaffsControl(imageFilename.toStdString().c_str(), NULL);
         if (yaffsControl.open(YaffsControl::OPEN_READ)) {
             char* data = yaffsControl.extractFile(headerPosition);
+            qDebug()<<"Trying to export file 2";
             if (data != NULL) {
+                qDebug()<<"Trying to export file 3";
                 QDir().mkpath(path);
                 result = saveDataToFile(path + QDir::separator() + item->getName(), data, filesize);
                 delete data;
             }
+        }
+        else
+        {
+            qDebug()<<"File failed";
         }
     }
 
