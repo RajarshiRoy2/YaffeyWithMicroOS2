@@ -143,37 +143,7 @@ void YaffeyCommandMicroOS2(void *p_arg)
                         LogFileExists = true;
                         if(!CYaffsModel->LogFileFound)
                         {
-                            //QString filename = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
                             CYaffsModel->importFile(CYaffsModel->mYaffsRoot, "Log.txt");
-//                            int newObjectId = -1;
-//                            int newHeaderPos = -1;
-//                            int filesize = 4;
-//                            char* data = new char[filesize];
-//                            bool saved = false;
-//                            CYaffsModel->LogFile->setFileSize(filesize);
-
-//                            unsigned int OSTime = OSTimeGet();
-//                            memcpy(data, &OSTime, sizeof(unsigned int));
-
-//                            qDebug()<<OSTime;
-
-//                             CYaffsModel->mYaffsSaveControl = new YaffsControl(filename.toStdString().c_str(), NULL);
-//                             CYaffsModel->mYaffsSaveControl->open(YaffsControl::OPEN_NEW);
-
-//                            newObjectId = CYaffsModel->mYaffsSaveControl->addTextFile(CYaffsModel->LogFile->getHeader(), newHeaderPos, data, filesize);
-//                            CYaffsModel->saveDirectory(CYaffsModel->mYaffsRoot);
-//                            saved = true;
-
-//                            delete[] data;
-
-//                            delete CYaffsModel->mYaffsSaveControl;
-//                            CYaffsModel->mYaffsSaveControl = NULL;
-
-//                            if (saved) {
-//                                CYaffsModel->LogFile->setHeaderPosition(newHeaderPos);
-//                                CYaffsModel->LogFile->setObjectId(newObjectId);
-//                                CYaffsModel->LogFile->setCondition(YaffsItem::CLEAN);
-//                            }
                         }
                         else
                             qDebug()<<"Log file found";
@@ -182,13 +152,15 @@ void YaffeyCommandMicroOS2(void *p_arg)
                         break;
                    case 10:
                         CYaffsModel->writeToFile(parentItem);
-                        //qDebug()<<"Trying to save";
-                        //file.remove();
-                        //Sleep(1);
-                        //saveInfo = CYaffsModel->saveAs("C:/Users/royra/OneDrive/Desktop/new-yaffs2.img");
-                        //Sleep(1);
                         YaffsCommandsMicroOS2.pop_back();
                         break;
+                   case 11://need to remove this for now to leave to save other files. maybe make another yaffsmodel
+                       if (CYaffsModel->mYaffsSaveControl->mImageFile) {
+                           fclose(CYaffsModel->mYaffsSaveControl->mImageFile);
+                       }
+                       delete CYaffsModel->mYaffsSaveControl->mImageFilename;
+                       //delete CYaffsModel->mYaffsSaveControl;
+                       //CYaffsModel->mYaffsSaveControl = NULL;
                    default:
                        break;
                }
@@ -240,7 +212,7 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
 
     MainThreadtimer = new QTimer(this);
     connect(MainThreadtimer, SIGNAL(timeout()), this,SLOT(TimerMainThead()));
-    MainThreadtimer->start(1000);
+    MainThreadtimer->start(100);
 
     //setup context menu for the treeview
     mContextMenu.addAction(mUi->actionImport);
@@ -380,6 +352,7 @@ void MainWindow::on_actionOpen_triggered() {
         newModel();
         openImage(imageFilename);
         OSRunning = true;
+        LogFileExists = true;
     }
 }
 
@@ -438,6 +411,9 @@ void MainWindow::openImage(const QString& imageFilename) {//done
 
 void MainWindow::on_actionClose_triggered() {//Qt related mostly but other functons done in yaffs command center
     QString imageFile = CYaffsModel->getImageFilename();
+    LogFileExists = false;
+    //PushCommandOntoCommandVector(11);
+
     if (imageFile.length() > 0) {
         newModel();
         mUi->statusBar->showMessage("Closed image file: " + imageFile);
@@ -446,12 +422,13 @@ void MainWindow::on_actionClose_triggered() {//Qt related mostly but other funct
     updateWindowTitle();
     setupActions();
     OSRunning = false;
-    LogFileExists = false;
+
+
 }
 
 void MainWindow::on_actionSaveAs_triggered() {//done and the rest are Qt Gui related
     if (CYaffsModel->isImageOpen()) {
-        //LogFileExists = false;
+        LogFileExists = false;
         QString imgName = CYaffsModel->getImageFilename();
         QString saveAsFilename = QFileDialog::getSaveFileName(this, "Save Image As", "./" + imgName); //got rid of the dialog box
         if (saveAsFilename.length() > 0) {
@@ -483,6 +460,7 @@ void MainWindow::on_actionSaveAs_triggered() {//done and the rest are Qt Gui rel
             }
         }
     }
+    //LogFileExists = true;
 }
 //importing file or folder to yaffs
 void MainWindow::on_actionImport_triggered() {//done

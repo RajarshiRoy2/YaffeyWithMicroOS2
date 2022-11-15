@@ -124,24 +124,30 @@ int YaffsControl::addDirectory(const yaffs_obj_hdr& objectHeader, int& headerPos
 
 int YaffsControl::addTextFile(const yaffs_obj_hdr& objectHeader, int& headerPos, const char* data, int fileSize)
 {
-    qDebug()<<"ObjectID: "<< mObjectId;
     int objectId = mObjectId;
-   // qDebug()<<"ObjectIDw: "<< objectId;
-    int chunks = (fileSize / CHUNK_SIZE);
     int remainder = (fileSize % CHUNK_SIZE);
-    int pageGoal = chunks + (remainder > 0 ? 1 : 0);
     int pagesWritten = 0;
-    bool wroteHeader = false;
 
-    updateHeader(headerPos,objectHeader,mObjectId);//updated header here
+    bool result = false;
+    if (mImageFile) {
+        if (fseek(mImageFile, headerPos, SEEK_SET) == 0) {
 
+            result = writeHeader(objectHeader, objectId);
+            if (result) {
+                qDebug() << "Wrote header at: " << headerPos;
+            } else {
+                qDebug() << "Failed to write header";
+            }
+        }
+    }
+    fseek(mImageFile, 0, SEEK_END);//go to the end of the file to continue writing after updating header
     const char* dataPtr = data;
+    int chunkId = 0;
 
-    //unsigned int i1 = (unsigned int)*data;
-    //qDebug()<<i1;
 
-    memcpy(mChunkData, dataPtr, CHUNK_SIZE);
-    if (writePage(objectId, ++chunks, CHUNK_SIZE)) {
+    memset(mChunkData + remainder, 0xff, CHUNK_SIZE - remainder);
+    memcpy(mChunkData, dataPtr, remainder);
+    if (writePage(objectId, ++chunkId, remainder)) {
         pagesWritten++;
     }
 
@@ -152,6 +158,7 @@ int YaffsControl::addTextFile(const yaffs_obj_hdr& objectHeader, int& headerPos,
 //data is a array char
 int YaffsControl::addFile(const yaffs_obj_hdr& objectHeader, int& headerPos, const char* data, int fileSize) {
     headerPos = ftell(mImageFile);
+
     int objectId = mObjectId++;
     int chunks = (fileSize / CHUNK_SIZE);
     int remainder = (fileSize % CHUNK_SIZE);
@@ -164,23 +171,23 @@ int YaffsControl::addFile(const yaffs_obj_hdr& objectHeader, int& headerPos, con
         int chunkId = 0;
 
         const char* dataPtr = data;
+
         for (int i = 0; i < chunks; ++i) {
             memcpy(mChunkData, dataPtr, CHUNK_SIZE);
             if (writePage(objectId, ++chunkId, CHUNK_SIZE)) {
                 pagesWritten++;
             }
-            //qDebug()<<"chunkId "<<chunkId;
-            //qDebug()<<"chunks "<<chunks;
             dataPtr += CHUNK_SIZE;
         }
 
         if (remainder > 0) {
-            memset(mChunkData + remainder, 0xff, CHUNK_SIZE - remainder);
-            memcpy(mChunkData, dataPtr, remainder);
+            memset(mChunkData + remainder, 0xff, CHUNK_SIZE - remainder);//fillong it with ? symbol
+            memcpy(mChunkData, dataPtr, remainder);//wrting the value of 14 size string
             if (writePage(objectId, ++chunkId, remainder)) {
                 pagesWritten++;
             }
         }
+
     }
 
     if (wroteHeader && pagesWritten == pageGoal) {
@@ -209,6 +216,7 @@ bool YaffsControl::writeHeader(const yaffs_obj_hdr& objectHeader, u32 objectId) 
     if (mImageFile) {
         memset(mChunkData, 0xff, CHUNK_SIZE);
         memcpy(mChunkData, &objectHeader, sizeof(yaffs_obj_hdr));
+        qDebug()<<"Header here saved: "<<objectHeader.file_size_low;
         result = writePage(objectId, 0, 0xffff);
     }
     return result;
@@ -232,9 +240,14 @@ bool YaffsControl::writePage(u32 objectId, u32 chunkId, u32 numBytes) {
     yaffs_pack_tags2(pt, &t, 1);
 
     //writes to the mImageFile here in the end
+
     if (fwrite(mPageData, PAGE_SIZE, 1, mImageFile) == 1) {//writes mpagedata to imagefile
         result = true;
         mNumPages++;
+    }
+    else
+    {
+        qDebug()<<"FAILED TO SAVE";
     }
 
     return result;
@@ -251,6 +264,7 @@ char* YaffsControl::extractFile(int objectHeaderPos) {
             if (readPage() == 0) {
                 yaffs_packed_tags2* pt = (yaffs_packed_tags2*)mSpareData;
                 if (pt->t.n_bytes == 0xffff) {
+                    qDebug()<<"File being extracted";
                     yaffs_obj_hdr* objectHeader = reinterpret_cast<yaffs_obj_hdr*>(mChunkData);
                     if (objectHeader->file_size_low > 0) {
                         data = new char[objectHeader->file_size_low];
@@ -297,11 +311,16 @@ bool YaffsControl::updateHeader(int objectHeaderPos, const yaffs_obj_hdr& object
     if (mImageFile) {
         if (fseek(mImageFile, objectHeaderPos, SEEK_SET) == 0) {
             result = writeHeader(objectHeader, objectId);
+            qDebug()<<"Here now to updayte header: "<<objectHeader.file_size_low;
             if (result) {
                 qDebug() << "Wrote header at: " << objectHeaderPos;
             } else {
                 qDebug() << "Failed to write header";
             }
+        }
+        else
+        {
+            qDebug()<<"Failed to write header here";
         }
     }
     return result;
@@ -323,8 +342,10 @@ int YaffsControl::readPage() {
 
 void YaffsControl::processPage() {
     yaffs_packed_tags2* pt = (yaffs_packed_tags2*)mSpareData;
+    qDebug()<<"obj id:"<<pt->t.obj_id;
 
     if (pt->t.n_bytes == 0xffff) {       //a new object
+        qDebug()<<"here new:";
         yaffs_obj_hdr* objectHeader = reinterpret_cast<yaffs_obj_hdr*>(mChunkData);
 
         switch (objectHeader->type) {

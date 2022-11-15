@@ -76,6 +76,8 @@ public:
     std::vector<unsigned int>TimeLog;
     void saveDirectory(YaffsItem* dirItem);
     int Once=0;
+    int LognewObjectId = -1;
+    int LognewHeaderPos = -1;
 
 protected:
     //from YaffsControlObserver

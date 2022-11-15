@@ -32,10 +32,12 @@ int main(int argc, char* argv[]) {
     w.show();
     a.exec();
 
-   // QString File = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
-   // PushCommandOntoCommandVector(4,File);
+    PushCommandOntoCommandVector(11);
 
-   // qDebug()<<"closed";
+    qDebug()<<"closed Gui...";
+
+    //delete CYaffsModel->mYaffsSaveControl;
+    //CYaffsModel->mYaffsSaveControl = NULL;
 
     return 0;
 }

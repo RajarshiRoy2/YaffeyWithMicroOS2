@@ -83,6 +83,8 @@ public:
     int mObjectId;
     int ObjectSize;
     static u8* Header;
+    FILE* mImageFile;
+    char* mImageFilename;
 
 private:
     int readPage();
@@ -92,8 +94,8 @@ private:
 
 private:
     YaffsControlObserver* mObserver;
-    char* mImageFilename;
-    FILE* mImageFile;
+
+
 
     YaffsReadInfo mReadInfo;
     YaffsSaveInfo mSaveInfo;

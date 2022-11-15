@@ -14,6 +14,7 @@
 #include "shared_memory.h"
 pthread_t OSTHREAD1;
 pthread_t OSTHREAD2;
+void YaffeyCommandMicroOS2(void *p_arg);
 
 OS_STK *OSTaskStkInit(void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT16U opt)
 {
