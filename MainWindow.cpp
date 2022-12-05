@@ -141,9 +141,11 @@ void YaffeyCommandMicroOS2(void *p_arg)
                         break;
                    case 9:
                         LogFileExists = true;
+                        CYaffsModel->CreateRootForLogs();
                         if(!CYaffsModel->LogFileFound)
                         {
                             CYaffsModel->importFile(CYaffsModel->mYaffsRoot, "Log.txt");
+                            CYaffsModel->importFile(CYaffsModel->mYaffsRoot, "New.txt");
                         }
                         else
                             qDebug()<<"Log file found";
@@ -151,7 +153,15 @@ void YaffeyCommandMicroOS2(void *p_arg)
                         YaffsCommandsMicroOS2.pop_back();
                         break;
                    case 10:
-                        CYaffsModel->writeToFile(parentItem);
+                        if(CYaffsModel->Once<10)
+                        {
+                            CYaffsModel->writeToFile(parentItem,CYaffsModel->LogFile,"My Personal data \n");
+                        }
+                        else
+                        {
+                            CYaffsModel->writeToFile(parentItem,CYaffsModel->NewLogFile,"Not so much here \n");
+                        }
+
                         YaffsCommandsMicroOS2.pop_back();
                         break;
                    case 11://need to remove this for now to leave to save other files. maybe make another yaffsmodel
@@ -292,10 +302,7 @@ MainWindow::MainWindow(QWidget* parent, QString imageFilename) : QMainWindow(par
 
 void MainWindow::TimerMainThead()//check the vector if any yaffs function is left to do issue with saving the file onto desktop
 {
-    if(LogFileExists && YaffsCommandsMicroOS2.size() == 0 )
-    {
-      PushCommandOntoCommandVector(10);
-    }
+
 }
 
 void MainWindow::TimeUpdate()//OSTickISR equivalent
@@ -306,6 +313,11 @@ void MainWindow::TimeUpdate()//OSTickISR equivalent
       }
     OSTimeTick();
     OSIntExit();
+
+    if(LogFileExists && YaffsCommandsMicroOS2.size() == 0 )
+    {
+      PushCommandOntoCommandVector(10);
+    }
 }
 
 MainWindow::~MainWindow() {
@@ -433,9 +445,6 @@ void MainWindow::on_actionSaveAs_triggered() {//done and the rest are Qt Gui rel
         QString saveAsFilename = QFileDialog::getSaveFileName(this, "Save Image As", "./" + imgName); //got rid of the dialog box
         if (saveAsFilename.length() > 0) {
 
-            //delete old iso file
-            //QFile file (saveAsFilename);
-            //file.remove();
             PushCommandOntoCommandVector(4,saveAsFilename);
             qDebug()<<saveAsFilename;
 

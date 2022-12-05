@@ -67,15 +67,21 @@ public:
     int mItemsDeleted;
     int processChildItemsForDelete(YaffsItem* item);
     int calculateAndDeleteContiguousRows(QList<int>& rows, YaffsItem* parentItem);
-    void writeToFile(YaffsItem *parentItem);
+    void writeToFile(YaffsItem *parentItem, YaffsItem *LogItem, std::string Data);
+    void CreateRootForLogs();
+
+    //list of log files
     YaffsItem* LogFile;
+    YaffsItem* NewLogFile;
+
     bool LogFileFound;
     char* Logdata;
     int LogdataSize;
     bool LogFileReadOnce;
     std::vector<unsigned int>TimeLog;
     void saveDirectory(YaffsItem* dirItem);
-    int Once=0;
+    int Once = 0;
+    int OnceNewLog = 0;
     int LognewObjectId = -1;
     int LognewHeaderPos = -1;
 

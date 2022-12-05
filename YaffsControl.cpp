@@ -133,11 +133,6 @@ int YaffsControl::addTextFile(const yaffs_obj_hdr& objectHeader, int& headerPos,
         if (fseek(mImageFile, headerPos, SEEK_SET) == 0) {
 
             result = writeHeader(objectHeader, objectId);
-            if (result) {
-                qDebug() << "Wrote header at: " << headerPos;
-            } else {
-                qDebug() << "Failed to write header";
-            }
         }
     }
     fseek(mImageFile, 0, SEEK_END);//go to the end of the file to continue writing after updating header
@@ -216,7 +211,6 @@ bool YaffsControl::writeHeader(const yaffs_obj_hdr& objectHeader, u32 objectId) 
     if (mImageFile) {
         memset(mChunkData, 0xff, CHUNK_SIZE);
         memcpy(mChunkData, &objectHeader, sizeof(yaffs_obj_hdr));
-        qDebug()<<"Header here saved: "<<objectHeader.file_size_low;
         result = writePage(objectId, 0, 0xffff);
     }
     return result;
@@ -245,17 +239,13 @@ bool YaffsControl::writePage(u32 objectId, u32 chunkId, u32 numBytes) {
         result = true;
         mNumPages++;
     }
-    else
-    {
-        qDebug()<<"FAILED TO SAVE";
-    }
 
     return result;
 }
 
 
 
-//returns pointer from file start to check if its valid or not when saving and return whole char array
+//returns pointer from file start to check if its valid or not when saving and return whole char array while extracting file
 char* YaffsControl::extractFile(int objectHeaderPos) {
     char* data = NULL;
     char* dataPtr;
@@ -264,7 +254,6 @@ char* YaffsControl::extractFile(int objectHeaderPos) {
             if (readPage() == 0) {
                 yaffs_packed_tags2* pt = (yaffs_packed_tags2*)mSpareData;
                 if (pt->t.n_bytes == 0xffff) {
-                    qDebug()<<"File being extracted";
                     yaffs_obj_hdr* objectHeader = reinterpret_cast<yaffs_obj_hdr*>(mChunkData);
                     if (objectHeader->file_size_low > 0) {
                         data = new char[objectHeader->file_size_low];
