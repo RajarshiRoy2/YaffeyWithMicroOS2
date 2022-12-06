@@ -98,6 +98,10 @@ private:
     int calculateAndDeleteOneRows(QList<int>& rows, YaffsItem* parentItem);
     int deleteRows(int row, int count, const QModelIndex& parentIndex);
 
+    QString YaffsLogMemory = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
+    QString YaffsLogMemoryName = "new-yaffs2.img";
+    void PrintContentofLogFile(YaffsItem *LogItem, QString Location );
+
 
 private:
 

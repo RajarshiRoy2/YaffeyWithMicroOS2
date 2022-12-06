@@ -169,8 +169,6 @@ void YaffeyCommandMicroOS2(void *p_arg)
                            fclose(CYaffsModel->mYaffsSaveControl->mImageFile);
                        }
                        delete CYaffsModel->mYaffsSaveControl->mImageFilename;
-                       //delete CYaffsModel->mYaffsSaveControl;
-                       //CYaffsModel->mYaffsSaveControl = NULL;
                    default:
                        break;
                }

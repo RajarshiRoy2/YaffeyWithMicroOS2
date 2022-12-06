@@ -21,8 +21,7 @@
 #include "YaffsModel.h"
 #include "os_cpu.h"
 #include "shared_memory.h"
-QString YaffsLogMemory = "C:/Users/royra/OneDrive/Desktop/new-yaffs2.img";
-QString YaffsLogMemoryName = "new-yaffs2.img";
+
 YaffsModel::YaffsModel(QObject* parent) : QAbstractItemModel(parent) {
     mYaffsRoot = NULL;
     mYaffsSaveControl = NULL;
@@ -213,7 +212,7 @@ void YaffsModel::saveDirectory(YaffsItem* dirItem) {
 
 void YaffsModel::CreateRootForLogs()
 {
-    mYaffsSaveControl = new YaffsControl("C:/Users/royra/OneDrive/Desktop/new-yaffs2.img", NULL);
+    mYaffsSaveControl = new YaffsControl(YaffsLogMemory.toStdString().c_str(), NULL);
     mYaffsSaveControl->open(YaffsControl::OPEN_NEW);
     YaffsItem* parentItem = mYaffsRoot->parent();
 
@@ -225,6 +224,20 @@ void YaffsModel::CreateRootForLogs()
     }
     mYaffsRoot->setHeaderPosition(LognewHeaderPos);
     mYaffsRoot->setObjectId(LognewObjectId);
+}
+
+void YaffsModel::PrintContentofLogFile(YaffsItem *LogItem, QString Location )
+{
+    //Displaying all the contents in the log file earlier ones
+    int headerPosition = LogItem->getHeaderPosition();
+    qDebug()<<headerPosition;
+
+    YaffsControl yaffsControl(Location.toStdString().c_str(), NULL);
+    if (yaffsControl.open(YaffsControl::OPEN_READ)) {
+        char* data = yaffsControl.extractFile(headerPosition);//reading old iso files
+        std::string OldData = data;
+        qDebug()<<QString::fromStdString(OldData);
+    }
 }
 
 void YaffsModel::writeToFile(YaffsItem *parentItem, YaffsItem *LogItem, std::string Data)
@@ -248,6 +261,7 @@ void YaffsModel::writeToFile(YaffsItem *parentItem, YaffsItem *LogItem, std::str
             else
             {
                 LognewObjectId = mYaffsSaveControl->addTextFile(LogItem->getHeader(), LognewHeaderPos, data, sizeOfChar);
+                PrintContentofLogFile(LogItem, YaffsLogMemory.toStdString().c_str());
             }
             Once++;
         }
@@ -261,6 +275,7 @@ void YaffsModel::writeToFile(YaffsItem *parentItem, YaffsItem *LogItem, std::str
             else
             {
                 LognewObjectId = mYaffsSaveControl->addTextFile(LogItem->getHeader(), LognewHeaderPos, data, sizeOfChar);
+                PrintContentofLogFile(LogItem, YaffsLogMemory.toStdString().c_str());
             }
             OnceNewLog++;
 
